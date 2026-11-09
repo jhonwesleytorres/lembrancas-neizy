@@ -1,0 +1,16 @@
+[build]
+  # Publica o Web App diretamente a partir da raiz (index.html)
+  # Isso evita erros de compilação, vulnerabilidades de servidor e custos de serverless.
+  command = ""
+  publish = "."
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "SAMEORIGIN"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
