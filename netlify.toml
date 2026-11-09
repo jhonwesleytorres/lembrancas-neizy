@@ -4,6 +4,10 @@
   command = ""
   publish = "."
 
+[build.environment]
+  # Desativa o plugin @netlify/plugin-nextjs para publicar como site estático ultra-rápido
+  NETLIFY_NEXT_PLUGIN_SKIP = "true"
+
 [[headers]]
   for = "/*"
   [headers.values]
