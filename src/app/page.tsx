@@ -141,7 +141,7 @@ export default function HomePage() {
   };
 
   return (
-    <main className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-zinc-950">
+    <main className="min-h-screen bg-zinc-950">
       {/* Tela de Load ao Abrir o App (Splash Screen) */}
       {showInitialSplash && (
         <div
@@ -192,11 +192,10 @@ export default function HomePage() {
           <button
             type="button"
             onClick={() => setIsUploadOpen(true)}
-            className="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition flex-shrink-0"
+            className="hidden sm:inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition flex-shrink-0"
           >
             <Plus className="w-4 h-4 stroke-[2.5] flex-shrink-0" />
-            <span className="hidden sm:inline">Enviar Mídia</span>
-            <span className="sm:hidden text-[11px]">Enviar</span>
+            <span>Enviar Mídia</span>
           </button>
         </div>
       </header>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lembrancas-pwa-v1';
+const CACHE_NAME = 'lembrancas-pwa-v2';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
@@ -44,4 +44,9 @@ self.addEventListener('fetch', (event) => {
     );
     return;
   }
+
+  // Handler padrão de rede com fallback ao cache para cumprir o requisito de instalabilidade PWA do Android/Chrome
+  event.respondWith(
+    fetch(request).catch(() => caches.match(request))
+  );
 });

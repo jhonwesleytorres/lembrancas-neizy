@@ -7,8 +7,26 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Lembranças" />
-  <link rel="manifest" href="./public/manifest.json" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
   <title>Lembranças | Galeria de Casamento & Revelação</title>
+
+  <script>
+    window.__deferredPwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function (e) {
+      e.preventDefault();
+      window.__deferredPwaPrompt = e;
+      window.dispatchEvent(new CustomEvent('pwa-prompt-captured'));
+    });
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {
+          navigator.serviceWorker.register('./public/sw.js').catch(function () {});
+        });
+      });
+    }
+  </script>
 
   <!-- Tailwind CSS + Lucide Icons + Suporte a Fotos HEIC do iPhone -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -23,12 +41,10 @@
       background-color: #09090b;
       color: #fafafa;
       -webkit-tap-highlight-color: transparent;
-      overscroll-behavior-y: none;
-      overflow-x: hidden;
-      max-width: 100vw;
-      width: 100%;
-      position: relative;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    body {
+      overflow-x: clip;
     }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
@@ -42,7 +58,7 @@
     }
   </style>
 </head>
-<body class="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-zinc-950 text-zinc-100 antialiased selection:bg-amber-500 selection:text-zinc-950 pb-20">
+<body class="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-amber-500 selection:text-zinc-950 pb-20">
 
   <!-- TELA DE LOAD AO ABRIR O APP (SPLASH SCREEN) -->
   <div
@@ -78,248 +94,251 @@
     </div>
   </div>
 
-  <!-- HEADER FIXO MOBILE-FIRST -->
-  <header class="sticky top-0 z-40 h-[61px] w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 flex items-center justify-between">
-    <div class="max-w-3xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
-      <div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-shrink">
-        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center text-zinc-950 shadow-md shadow-amber-500/20 flex-shrink-0">
-          <i data-lucide="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+  <!-- BLOCO SUPERIOR FIXO (CABEÇALHO + ARMAZENAMENTO + BUSCA E CATEGORIAS) -->
+  <div class="sticky top-0 z-40 w-full bg-zinc-950/95 backdrop-blur-md">
+    <!-- HEADER FIXO MOBILE-FIRST -->
+    <header class="relative z-50 h-[61px] w-full border-b border-zinc-800/80 px-3 sm:px-4 flex items-center justify-between">
+      <div class="max-w-3xl w-full mx-auto flex items-center justify-between gap-2 min-w-0">
+        <div class="flex items-center gap-2 sm:gap-2.5 min-w-0 flex-shrink">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center text-zinc-950 shadow-md shadow-amber-500/20 flex-shrink-0">
+            <i data-lucide="camera" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-none truncate">Lembranças</h1>
+            <p class="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1 truncate">
+              <i data-lucide="sparkles" class="w-3 h-3 text-amber-400 flex-shrink-0"></i>
+              <span class="truncate">Casamento & Revelação</span>
+            </p>
+          </div>
         </div>
-        <div class="min-w-0">
-          <h1 class="text-sm sm:text-base font-bold tracking-tight text-white leading-none truncate">Lembranças</h1>
-          <p class="text-[10px] sm:text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1 truncate">
-            <i data-lucide="sparkles" class="w-3 h-3 text-amber-400 flex-shrink-0"></i>
-            <span class="truncate">Casamento & Revelação</span>
-          </p>
-        </div>
-      </div>
 
-      <div class="flex items-center gap-1 sm:gap-2 flex-shrink-0">
-        <!-- BOTÃO GERENCIAR USUÁRIOS (APENAS ADMIN) -->
-        <button
-          id="btnAdminUsersModal"
-          type="button"
-          class="hidden relative p-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-amber-400 hover:text-white hover:border-amber-400/50 active:scale-95 transition flex-shrink-0"
-          title="Gerenciar Acessos dos Convidados"
-        >
-          <i data-lucide="shield-check" class="w-4 h-4"></i>
-          <span id="pendingUsersBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg">0</span>
-        </button>
-
-        <!-- BOTÃO SINCRONIZAR / RECARREGAR -->
-        <button
-          id="btnSyncFirestore"
-          type="button"
-          class="p-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition flex-shrink-0"
-          title="Sincronizar com o Firebase"
-        >
-          <i id="syncIcon" data-lucide="rotate-cw" class="w-4 h-4"></i>
-        </button>
-
-        <!-- BOTÃO MODO SELEÇÃO -->
-        <button
-          id="btnToggleSelectionMode"
-          type="button"
-          title="Selecionar Mídias"
-          class="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-semibold text-xs hover:text-white hover:border-zinc-700 active:scale-95 transition flex-shrink-0"
-        >
-          <i data-lucide="check-square" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
-          <span id="btnSelectText" class="hidden sm:inline">Selecionar</span>
-        </button>
-
-        <button
-          id="btnOpenUploadHeader"
-          type="button"
-          class="inline-flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-3.5 sm:py-2 rounded-xl sm:rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition flex-shrink-0"
-        >
-          <i data-lucide="plus" class="w-4 h-4 flex-shrink-0"></i>
-          <span class="hidden sm:inline">Enviar Mídia</span>
-          <span class="sm:hidden text-[11px]">Enviar</span>
-        </button>
-
-        <!-- PERFIL / MENU DO USUÁRIO -->
-        <div class="relative flex-shrink-0">
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+          <!-- BOTÃO GERENCIAR USUÁRIOS (APENAS ADMIN) -->
           <button
-            id="btnUserProfile"
+            id="btnAdminUsersModal"
             type="button"
-            class="flex items-center p-1 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-95 transition"
-            title="Conta do Usuário"
+            class="hidden relative p-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-amber-400 hover:text-white hover:border-amber-400/50 active:scale-95 transition flex-shrink-0"
+            title="Gerenciar Acessos dos Convidados"
           >
-            <img id="headerUserAvatarImg" src="" class="hidden w-7 h-7 rounded-lg sm:rounded-xl object-cover" />
-            <div id="headerUserAvatarFallback" class="w-7 h-7 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center text-xs font-bold">
-              <i data-lucide="user" class="w-4 h-4"></i>
-            </div>
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+            <span id="pendingUsersBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg">0</span>
           </button>
 
-          <!-- Dropdown do Usuário -->
-          <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] p-2 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl z-50 text-xs">
-            <div class="p-2 border-b border-zinc-800 mb-1">
-              <p id="dropdownUserName" class="font-bold text-white truncate">Convidado</p>
-              <p id="dropdownUserEmail" class="text-[11px] text-zinc-400 truncate">email@gmail.com</p>
-              <span id="dropdownUserRoleBadge" class="mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">Administrador</span>
+          <!-- BOTÃO SINCRONIZAR / RECARREGAR -->
+          <button
+            id="btnSyncFirestore"
+            type="button"
+            class="p-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition flex-shrink-0"
+            title="Sincronizar com o Firebase"
+          >
+            <i id="syncIcon" data-lucide="rotate-cw" class="w-4 h-4"></i>
+          </button>
+
+          <!-- BOTÃO MODO SELEÇÃO -->
+          <button
+            id="btnToggleSelectionMode"
+            type="button"
+            title="Selecionar Mídias"
+            class="inline-flex items-center justify-center gap-1.5 p-2 sm:px-3 sm:py-2 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-semibold text-xs hover:text-white hover:border-zinc-700 active:scale-95 transition flex-shrink-0"
+          >
+            <i data-lucide="check-square" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+            <span id="btnSelectText" class="hidden sm:inline">Selecionar</span>
+          </button>
+
+          <!-- BOTÃO ENVIAR MÍDIA (SOMENTE DESKTOP/TABLET - OCULTO NO MOBILE) -->
+          <button
+            id="btnOpenUploadHeader"
+            type="button"
+            class="hidden sm:inline-flex items-center justify-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition flex-shrink-0"
+          >
+            <i data-lucide="plus" class="w-4 h-4 flex-shrink-0"></i>
+            <span>Enviar Mídia</span>
+          </button>
+
+          <!-- PERFIL / MENU DO USUÁRIO -->
+          <div class="relative flex-shrink-0">
+            <button
+              id="btnUserProfile"
+              type="button"
+              class="flex items-center p-1 rounded-xl sm:rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-95 transition"
+              title="Conta do Usuário"
+            >
+              <img id="headerUserAvatarImg" src="" class="hidden w-7 h-7 rounded-lg sm:rounded-xl object-cover" />
+              <div id="headerUserAvatarFallback" class="w-7 h-7 rounded-lg sm:rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center text-xs font-bold">
+                <i data-lucide="user" class="w-4 h-4"></i>
+              </div>
+            </button>
+
+            <!-- Dropdown do Usuário -->
+            <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] p-2 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl z-50 text-xs">
+              <div class="p-2 border-b border-zinc-800 mb-1">
+                <p id="dropdownUserName" class="font-bold text-white truncate">Convidado</p>
+                <p id="dropdownUserEmail" class="text-[11px] text-zinc-400 truncate">email@gmail.com</p>
+                <span id="dropdownUserRoleBadge" class="mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">Administrador</span>
+              </div>
+              <button
+                id="dropdownBtnAdmin"
+                type="button"
+                class="hidden w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
+              >
+                <i data-lucide="shield-check" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
+                Gerenciar Acessos
+              </button>
+              <button
+                id="dropdownBtnInstallPwa"
+                type="button"
+                class="w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
+              >
+                <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+                Instalar no Celular (App)
+              </button>
+              <button
+                id="dropdownBtnSignOut"
+                type="button"
+                class="w-full text-left p-2 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 transition"
+              >
+                <i data-lucide="log-out" class="w-4 h-4 flex-shrink-0"></i>
+                Sair da Conta
+              </button>
             </div>
-            <button
-              id="dropdownBtnAdmin"
-              type="button"
-              class="hidden w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
-            >
-              <i data-lucide="shield-check" class="w-4 h-4 text-amber-400 flex-shrink-0"></i>
-              Gerenciar Acessos
-            </button>
-            <button
-              id="dropdownBtnInstallPwa"
-              type="button"
-              class="w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
-            >
-              <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
-              Instalar no Celular (App)
-            </button>
-            <button
-              id="dropdownBtnSignOut"
-              type="button"
-              class="w-full text-left p-2 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 transition"
-            >
-              <i data-lucide="log-out" class="w-4 h-4 flex-shrink-0"></i>
-              Sair da Conta
-            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAINEL DE ARMAZENAMENTO USADO (EXPANSÍVEL) -->
+    <div class="w-full bg-zinc-900/50 border-b border-zinc-800/70 px-3 sm:px-4 py-2">
+      <div class="max-w-3xl mx-auto">
+        <button
+          id="btnToggleStorageDetails"
+          type="button"
+          class="w-full flex flex-col gap-1.5 text-left group"
+        >
+          <div class="flex items-center justify-between gap-2 text-xs min-w-0">
+            <div class="flex items-center gap-1.5 text-zinc-300 font-medium min-w-0 truncate">
+              <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
+              <span class="hidden sm:inline">Armazenamento usado:</span>
+              <span class="sm:hidden">Espaço:</span>
+              <strong id="storageUsedText" class="text-white whitespace-nowrap">0 B</strong>
+              <span class="text-zinc-500 whitespace-nowrap">de 1 GB</span>
+            </div>
+
+            <div class="flex items-center gap-2 flex-shrink-0">
+              <span id="storageSavedBadge" class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Economia WebP: 0 B
+              </span>
+              <span class="text-[11px] text-zinc-400 group-hover:text-white flex items-center gap-0.5 whitespace-nowrap">
+                Detalhes
+                <i id="storageChevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform"></i>
+              </span>
+            </div>
+          </div>
+
+          <!-- Barra de Progresso de Armazenamento -->
+          <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden flex">
+            <div id="storageBarCasamento" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%" title="Casamento"></div>
+            <div id="storageBarRevelacao" class="h-full bg-sky-400 transition-all duration-300" style="width: 0%" title="Revelação"></div>
+          </div>
+        </button>
+
+        <!-- Detalhes Expandidos do Armazenamento -->
+        <div id="storageDetailsPanel" class="hidden pt-3 mt-2.5 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
+            <span class="text-[10px] text-zinc-400 uppercase block truncate">Total no Banco</span>
+            <strong id="detailTotalUsed" class="text-sm text-white block truncate">0 B</strong>
+            <span id="detailTotalFiles" class="text-[10px] text-zinc-500 block truncate">0 arquivos</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
+            <span class="text-[10px] text-amber-400 uppercase block truncate">💍 Casamento</span>
+            <strong id="detailCasamentoUsed" class="text-sm text-white block truncate">0 B</strong>
+            <span id="detailCasamentoFiles" class="text-[10px] text-zinc-500 block truncate">0 mídias</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
+            <span class="text-[10px] text-sky-400 uppercase block truncate">🧸 Revelação</span>
+            <strong id="detailRevelacaoUsed" class="text-sm text-white block truncate">0 B</strong>
+            <span id="detailRevelacaoFiles" class="text-[10px] text-zinc-500 block truncate">0 mídias</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 min-w-0">
+            <span class="text-[10px] text-emerald-400 uppercase block truncate">✨ Economizado</span>
+            <strong id="detailSavedBytes" class="text-sm text-emerald-300 block truncate">0 B</strong>
+            <span id="detailOriginalBytes" class="text-[10px] text-zinc-400 block truncate">Original: 0 B</span>
           </div>
         </div>
       </div>
     </div>
-  </header>
 
-  <!-- PAINEL DE ARMAZENAMENTO USADO (EXPANSÍVEL) -->
-  <div class="w-full bg-zinc-900/50 border-b border-zinc-800/70 px-3 sm:px-4 py-2.5 overflow-hidden">
-    <div class="max-w-3xl mx-auto">
-      <button
-        id="btnToggleStorageDetails"
-        type="button"
-        class="w-full flex flex-col gap-1.5 text-left group"
-      >
-        <div class="flex items-center justify-between gap-2 text-xs min-w-0">
-          <div class="flex items-center gap-1.5 text-zinc-300 font-medium min-w-0 truncate">
-            <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
-            <span class="hidden sm:inline">Armazenamento usado:</span>
-            <span class="sm:hidden">Espaço:</span>
-            <strong id="storageUsedText" class="text-white whitespace-nowrap">0 B</strong>
-            <span class="text-zinc-500 whitespace-nowrap">de 1 GB</span>
+    <!-- BARRA DE BUSCA EM TEMPO REAL + SELETOR DE MODO + ABAS DE CATEGORIA E FAVORITOS -->
+    <section class="w-full border-b border-zinc-800/80 px-3 sm:px-4 py-2.5 sm:py-3">
+      <div class="max-w-3xl w-full mx-auto space-y-2.5 sm:space-y-3 min-w-0">
+        <!-- Linha 1: Busca + Alternador de Visualização (Grade | Slideshow) -->
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="relative flex-1 min-w-0">
+            <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+            <input
+              id="searchInput"
+              type="search"
+              placeholder="Buscar por nome ou momento..."
+              class="w-full pl-9 pr-4 py-2 sm:py-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-base sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/70 transition"
+            />
           </div>
 
-          <div class="flex items-center gap-2 flex-shrink-0">
-            <span id="storageSavedBadge" class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-              Economia WebP: 0 B
-            </span>
-            <span class="text-[11px] text-zinc-400 group-hover:text-white flex items-center gap-0.5 whitespace-nowrap">
-              Detalhes
-              <i id="storageChevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform"></i>
-            </span>
+          <div class="flex items-center bg-zinc-900 p-1 rounded-2xl border border-zinc-800 flex-shrink-0" role="group">
+            <button
+              type="button"
+              data-view="grid"
+              class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition bg-amber-500 text-zinc-950 shadow"
+              title="Modo Grade"
+            >
+              <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Grade</span>
+            </button>
+            <button
+              type="button"
+              data-view="slideshow"
+              class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition text-zinc-400 hover:text-white"
+              title="Apresentação de Slides"
+            >
+              <i data-lucide="play-square" class="w-4 h-4"></i>
+              <span class="hidden sm:inline">Slides</span>
+            </button>
           </div>
         </div>
 
-        <!-- Barra de Progresso de Armazenamento -->
-        <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden flex">
-          <div id="storageBarCasamento" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%" title="Casamento"></div>
-          <div id="storageBarRevelacao" class="h-full bg-sky-400 transition-all duration-300" style="width: 0%" title="Revelação"></div>
-        </div>
-      </button>
-
-      <!-- Detalhes Expandidos do Armazenamento -->
-      <div id="storageDetailsPanel" class="hidden pt-3 mt-2.5 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
-          <span class="text-[10px] text-zinc-400 uppercase block truncate">Total no Banco</span>
-          <strong id="detailTotalUsed" class="text-sm text-white block truncate">0 B</strong>
-          <span id="detailTotalFiles" class="text-[10px] text-zinc-500 block truncate">0 arquivos</span>
-        </div>
-        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
-          <span class="text-[10px] text-amber-400 uppercase block truncate">💍 Casamento</span>
-          <strong id="detailCasamentoUsed" class="text-sm text-white block truncate">0 B</strong>
-          <span id="detailCasamentoFiles" class="text-[10px] text-zinc-500 block truncate">0 mídias</span>
-        </div>
-        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 min-w-0">
-          <span class="text-[10px] text-sky-400 uppercase block truncate">🧸 Revelação</span>
-          <strong id="detailRevelacaoUsed" class="text-sm text-white block truncate">0 B</strong>
-          <span id="detailRevelacaoFiles" class="text-[10px] text-zinc-500 block truncate">0 mídias</span>
-        </div>
-        <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20 min-w-0">
-          <span class="text-[10px] text-emerald-400 uppercase block truncate">✨ Economizado</span>
-          <strong id="detailSavedBytes" class="text-sm text-emerald-300 block truncate">0 B</strong>
-          <span id="detailOriginalBytes" class="text-[10px] text-zinc-400 block truncate">Original: 0 B</span>
+        <!-- Linha 2: Abas Rápidas de Categoria + FAVORITOS -->
+        <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar w-full max-w-full pb-0.5">
+          <button
+            type="button"
+            data-cat="Todas"
+            class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition flex-shrink-0 bg-white text-zinc-950"
+          >
+            Todas (<span id="countTodas">0</span>)
+          </button>
+          <button
+            type="button"
+            data-cat="Casamento"
+            class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
+          >
+            💍 Casamento (<span id="countCasamento">0</span>)
+          </button>
+          <button
+            type="button"
+            data-cat="Revelação"
+            class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
+          >
+            🧸 Revelação (<span id="countRevelacao">0</span>)
+          </button>
+          <button
+            type="button"
+            data-cat="Favoritos"
+            class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-rose-400 border border-zinc-800 hover:text-white"
+          >
+            <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500 text-rose-500"></i>
+            Favoritos (<span id="countFavoritos">0</span>)
+          </button>
         </div>
       </div>
-    </div>
+    </section>
   </div>
-
-  <!-- BARRA DE BUSCA EM TEMPO REAL + SELETOR DE MODO + ABAS DE CATEGORIA E FAVORITOS -->
-  <section class="sticky top-[61px] z-30 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-3 overflow-hidden">
-    <div class="max-w-3xl w-full mx-auto space-y-2.5 sm:space-y-3 min-w-0">
-      <!-- Linha 1: Busca + Alternador de Visualização (Grade | Slideshow) -->
-      <div class="flex items-center gap-2 min-w-0">
-        <div class="relative flex-1 min-w-0">
-          <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
-          <input
-            id="searchInput"
-            type="search"
-            placeholder="Buscar por nome ou momento..."
-            class="w-full pl-9 pr-4 py-2 sm:py-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-base sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/70 transition"
-          />
-        </div>
-
-        <div class="flex items-center bg-zinc-900 p-1 rounded-2xl border border-zinc-800 flex-shrink-0" role="group">
-          <button
-            type="button"
-            data-view="grid"
-            class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition bg-amber-500 text-zinc-950 shadow"
-            title="Modo Grade"
-          >
-            <i data-lucide="grid-3x3" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Grade</span>
-          </button>
-          <button
-            type="button"
-            data-view="slideshow"
-            class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition text-zinc-400 hover:text-white"
-            title="Apresentação de Slides"
-          >
-            <i data-lucide="play-square" class="w-4 h-4"></i>
-            <span class="hidden sm:inline">Slides</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Linha 2: Abas Rápidas de Categoria + FAVORITOS -->
-      <div class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar w-full max-w-full pb-0.5">
-        <button
-          type="button"
-          data-cat="Todas"
-          class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold transition flex-shrink-0 bg-white text-zinc-950"
-        >
-          Todas (<span id="countTodas">0</span>)
-        </button>
-        <button
-          type="button"
-          data-cat="Casamento"
-          class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
-        >
-          💍 Casamento (<span id="countCasamento">0</span>)
-        </button>
-        <button
-          type="button"
-          data-cat="Revelação"
-          class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
-        >
-          🧸 Revelação (<span id="countRevelacao">0</span>)
-        </button>
-        <button
-          type="button"
-          data-cat="Favoritos"
-          class="cat-btn px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-rose-400 border border-zinc-800 hover:text-white"
-        >
-          <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500 text-rose-500"></i>
-          Favoritos (<span id="countFavoritos">0</span>)
-        </button>
-      </div>
-    </div>
-  </section>
 
   <!-- BARRA FLUTUANTE DE AÇÕES DO MODO SELEÇÃO (COM BAIXAR E APAGAR) -->
   <aside
@@ -407,7 +426,7 @@
   </div>
 
   <!-- CONTEÚDO PRINCIPAL DA GALERIA -->
-  <main class="max-w-3xl w-full mx-auto pt-3 sm:pt-4 pb-24 overflow-x-hidden">
+  <main class="max-w-3xl w-full mx-auto pt-3 sm:pt-4 pb-24">
     <div id="loadingState" class="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400 px-4 text-center">
       <div class="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
       <p class="text-xs">Conectando ao Firebase (lembrancas-neizy)...</p>
@@ -419,12 +438,12 @@
       </div>
       <h3 class="text-base font-semibold text-zinc-200">Nenhuma lembrança na galeria</h3>
       <p class="text-xs text-zinc-400 mt-1">
-        Toque em "Enviar" para adicionar fotos ou vídeos do evento!
+        Toque no botão "+" para adicionar fotos ou vídeos do evento!
       </p>
     </div>
 
     <!-- Container da Grade -->
-    <div id="galleryContainer" class="w-full overflow-hidden"></div>
+    <div id="galleryContainer" class="w-full"></div>
   </main>
 
   <!-- BOTÃO FLUTUANTE MOBILE (FAB) -->
@@ -917,6 +936,27 @@
         </button>
       </div>
 
+      <!-- Bloco de Instruções Manuais para Android (Caso o navegador não abra o pop-up automático) -->
+      <div id="pwaAndroidInstructions" class="hidden space-y-3">
+        <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-2 text-[11px] text-amber-200">
+          <p class="font-bold flex items-center gap-1.5 text-amber-400">
+            <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i> Como instalar no Android:
+          </p>
+          <ol class="space-y-1.5 list-decimal list-inside text-zinc-300">
+            <li>Toque nos <strong>3 pontinhos (⋮)</strong> no canto superior direito do navegador (Chrome)</li>
+            <li>Selecione <strong>"Instalar aplicativo"</strong> ou <strong>"Adicionar à tela inicial"</strong></li>
+            <li>Confirme tocando em <strong>Instalar</strong></li>
+          </ol>
+        </div>
+        <button
+          id="btnDismissPwaAndroid"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs transition cursor-pointer"
+        >
+          Entendi
+        </button>
+      </div>
+
       <!-- Bloco de Instruções Exclusivo para iPhone / iPad (iOS Safari) -->
       <div id="pwaIosInstructions" class="hidden space-y-3">
         <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-2 text-[11px] text-amber-200">
@@ -1205,11 +1245,15 @@
     function applyUserPermissions(profile) {
       const canEdit = profile?.role === 'admin' || profile?.permission === 'editar';
 
-      // 1. Botão Enviar Mídia (Header)
+      // 1. Botão Enviar Mídia (Header - apenas em telas >= sm, oculto no mobile)
       const btnUploadHeader = document.getElementById('btnOpenUploadHeader');
       if (btnUploadHeader) {
-        if (canEdit) btnUploadHeader.classList.remove('hidden');
-        else btnUploadHeader.classList.add('hidden');
+        if (canEdit) {
+          btnUploadHeader.classList.add('hidden', 'sm:inline-flex');
+        } else {
+          btnUploadHeader.classList.add('hidden');
+          btnUploadHeader.classList.remove('sm:inline-flex');
+        }
       }
 
       // 2. Botão Flutuante Mobile (FAB)
@@ -1668,31 +1712,25 @@
     // ========================================================
     // INSTALAÇÃO DO PWA (POP-UP NO CELULAR / NAVEGADOR)
     // ========================================================
-    let deferredPrompt = null;
+    let deferredPrompt = window.__deferredPwaPrompt || null;
     const pwaInstallModal = document.getElementById('pwaInstallModal');
     const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-
-    // Registrar Service Worker para PWA
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./public/sw.js').catch((err) => {
-          console.warn('Aviso no ServiceWorker:', err);
-        });
-      });
-    }
 
     function showPwaInstallModal(force = false) {
       if (isStandalone && !force) return;
 
       const pwaStandard = document.getElementById('pwaStandardActions');
+      const pwaAndroid = document.getElementById('pwaAndroidInstructions');
       const pwaIos = document.getElementById('pwaIosInstructions');
 
       if (isIos) {
         pwaStandard.classList.add('hidden');
+        if (pwaAndroid) pwaAndroid.classList.add('hidden');
         pwaIos.classList.remove('hidden');
       } else {
         pwaStandard.classList.remove('hidden');
+        if (pwaAndroid) pwaAndroid.classList.add('hidden');
         pwaIos.classList.add('hidden');
       }
 
@@ -1706,15 +1744,29 @@
       pwaInstallModal.classList.remove('flex');
     }
 
-    // Captura o evento nativo de instalação do Chrome / Android / Edge
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-
+    const handleBeforeInstallPromptReady = () => {
+      if (window.__deferredPwaPrompt) {
+        deferredPrompt = window.__deferredPwaPrompt;
+      }
       const dismissedUntil = localStorage.getItem('pwa_dismissed_until');
       if (!dismissedUntil || Date.now() > Number(dismissedUntil)) {
         setTimeout(() => showPwaInstallModal(), 2000);
       }
+    };
+
+    // Caso o evento já tenha sido capturado no <head> antes do módulo iniciar
+    if (window.__deferredPwaPrompt) {
+      handleBeforeInstallPromptReady();
+    }
+
+    window.addEventListener('pwa-prompt-captured', handleBeforeInstallPromptReady);
+
+    // Captura o evento nativo de instalação do Chrome / Android / Edge
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      window.__deferredPwaPrompt = e;
+      handleBeforeInstallPromptReady();
     });
 
     // Se for iOS e ainda não estiver instalado, exibe após alguns segundos
@@ -1726,15 +1778,29 @@
     }
 
     document.getElementById('btnConfirmInstallPwa').addEventListener('click', async () => {
-      if (deferredPrompt) {
-        deferredPrompt.prompt();
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-          hidePwaInstallModal();
+      const promptEvent = deferredPrompt || window.__deferredPwaPrompt;
+      if (promptEvent) {
+        try {
+          promptEvent.prompt();
+          const { outcome } = await promptEvent.userChoice;
+          if (outcome === 'accepted') {
+            hidePwaInstallModal();
+          }
+        } catch (err) {
+          console.warn('Erro ao exibir prompt PWA:', err);
         }
         deferredPrompt = null;
+        window.__deferredPwaPrompt = null;
       } else {
-        showPwaInstallModal(true);
+        // Caso o navegador ainda não tenha liberado o prompt nativo (ex: navegador interno do WhatsApp/Instagram ou já instalado),
+        // exibe o passo a passo visual do Android para o usuário concluir em 2 toques.
+        const pwaStandard = document.getElementById('pwaStandardActions');
+        const pwaAndroid = document.getElementById('pwaAndroidInstructions');
+        if (pwaStandard && pwaAndroid) {
+          pwaStandard.classList.add('hidden');
+          pwaAndroid.classList.remove('hidden');
+          lucide.createIcons();
+        }
       }
     });
 
@@ -1745,6 +1811,8 @@
 
     document.getElementById('btnDismissPwaModal').addEventListener('click', dismissPwa);
     document.getElementById('btnDismissPwaIos').addEventListener('click', dismissPwa);
+    const btnDismissAndroid = document.getElementById('btnDismissPwaAndroid');
+    if (btnDismissAndroid) btnDismissAndroid.addEventListener('click', dismissPwa);
 
     // Botão no menu do usuário para abrir manualmente
     document.getElementById('dropdownBtnInstallPwa').addEventListener('click', () => {

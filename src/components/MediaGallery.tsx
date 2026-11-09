@@ -277,9 +277,9 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
   }, [viewMode, isSlideshowPlaying, filteredItems.length, nextSlide]);
 
   return (
-    <div className="space-y-4 pb-24 w-full max-w-[100vw] overflow-x-hidden">
+    <div className="space-y-4 pb-24 w-full">
       {/* Barra Fixa de Ferramentas */}
-      <div className="sticky top-[61px] z-30 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3 overflow-hidden">
+      <div className="sticky top-[61px] z-30 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3">
         <div className="max-w-3xl w-full mx-auto space-y-2.5 sm:space-y-3 min-w-0">
           {/* Linha 1: Busca + Botão Modo Seleção + Alternador de Visualização */}
           <div className="flex items-center gap-2 min-w-0">
