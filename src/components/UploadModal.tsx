@@ -608,7 +608,7 @@ export default function UploadModal({
                           onChange={(e) =>
                             handleTitleChange(item.tempId, e.target.value)
                           }
-                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 focus:border-amber-400 focus:outline-none text-sm text-white placeholder-zinc-500"
+                          className="w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 focus:border-amber-400 focus:outline-none text-base sm:text-sm text-white placeholder-zinc-500"
                         />
 
                         <div className="flex items-center gap-2 text-[11px] text-zinc-400">

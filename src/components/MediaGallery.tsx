@@ -277,20 +277,20 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
   }, [viewMode, isSlideshowPlaying, filteredItems.length, nextSlide]);
 
   return (
-    <div className="space-y-4 pb-24">
+    <div className="space-y-4 pb-24 w-full max-w-[100vw] overflow-x-hidden">
       {/* Barra Fixa de Ferramentas */}
-      <div className="sticky top-[61px] z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3 space-y-3">
-        <div className="max-w-3xl mx-auto space-y-3">
+      <div className="sticky top-[61px] z-30 w-full bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-3 sm:px-4 py-3 space-y-2.5 sm:space-y-3 overflow-hidden">
+        <div className="max-w-3xl w-full mx-auto space-y-2.5 sm:space-y-3 min-w-0">
           {/* Linha 1: Busca + Botão Modo Seleção + Alternador de Visualização */}
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
               <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Buscar por nome ou momento..."
-                className="w-full pl-9 pr-8 py-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/70 transition"
+                className="w-full pl-9 pr-8 py-2 sm:py-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-base sm:text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/70 transition"
               />
               {searchQuery && (
                 <button
@@ -310,7 +310,7 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
                 setIsSelectionMode((p) => !p);
                 if (isSelectionMode) setSelectedIds(new Set());
               }}
-              className={`p-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition ${
+              className={`p-2 sm:p-2.5 rounded-2xl text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 ${
                 isSelectionMode
                   ? 'bg-amber-500 text-zinc-950 shadow-md font-bold'
                   : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:text-white hover:border-zinc-700'
@@ -324,7 +324,7 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
             </button>
 
             {/* Alternador de Visualização */}
-            <div className="flex items-center bg-zinc-900 p-1 rounded-2xl border border-zinc-800" role="group">
+            <div className="flex items-center bg-zinc-900 p-1 rounded-2xl border border-zinc-800 flex-shrink-0" role="group">
               <button
                 type="button"
                 onClick={() => setViewMode('grid')}
@@ -360,7 +360,7 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
           </div>
 
           {/* Linha 2: Abas Rápidas (Todas, Casamento, Revelação, Favoritos) */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar w-full max-w-full pb-0.5">
             <button
               type="button"
               onClick={() => setActiveCategory('Todas')}
@@ -533,8 +533,8 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
 
       {/* MODO: GRADE */}
       {viewMode === 'grid' && filteredItems.length > 0 && (
-        <div className="max-w-3xl mx-auto px-1 sm:px-4">
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-2">
+        <div className="max-w-3xl w-full mx-auto px-1 sm:px-4 overflow-hidden">
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-2 w-full">
             {filteredItems.map((item) => {
               const isSelected = selectedIds.has(item.id);
               const isFav = isItemFavorite(item);
@@ -547,7 +547,7 @@ export default function MediaGallery({ items }: MediaGalleryProps) {
                     else setSelectedHdItem(item);
                   }}
                   className={`group relative aspect-square bg-zinc-900 overflow-hidden sm:rounded-xl focus:outline-none cursor-pointer ${
-                    isSelected ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-zinc-950 scale-[0.98]' : ''
+                    isSelected ? 'ring-2 sm:ring-4 ring-inset ring-amber-400 scale-[0.98]' : ''
                   }`}
                 >
                   <img
