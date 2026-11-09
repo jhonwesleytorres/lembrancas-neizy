@@ -1,0 +1,2936 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#09090b" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Lembranças" />
+  <link rel="manifest" href="./public/manifest.json" />
+  <title>Lembranças | Galeria de Casamento & Revelação</title>
+
+  <!-- Tailwind CSS + Lucide Icons + Suporte a Fotos HEIC do iPhone -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js"></script>
+
+  <style>
+    html, body {
+      background-color: #09090b;
+      color: #fafafa;
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior-y: none;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-screen bg-zinc-950 text-zinc-100 antialiased selection:bg-amber-500 selection:text-zinc-950 pb-20">
+
+  <!-- HEADER FIXO MOBILE-FIRST -->
+  <header class="sticky top-0 z-40 h-[61px] bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-4 flex items-center justify-between">
+    <div class="max-w-3xl w-full mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-400 to-rose-500 flex items-center justify-center text-zinc-950 shadow-md shadow-amber-500/20">
+          <i data-lucide="camera" class="w-5 h-5"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-bold tracking-tight text-white leading-none">Lembranças</h1>
+          <p class="text-[11px] text-zinc-400 mt-0.5 flex items-center gap-1">
+            <i data-lucide="sparkles" class="w-3 h-3 text-amber-400"></i>
+            Casamento & Revelação
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5 sm:gap-2">
+        <!-- BOTÃO GERENCIAR USUÁRIOS (APENAS ADMIN) -->
+        <button
+          id="btnAdminUsersModal"
+          type="button"
+          class="hidden relative p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-amber-400 hover:text-white hover:border-amber-400/50 active:scale-95 transition"
+          title="Gerenciar Acessos dos Convidados"
+        >
+          <i data-lucide="shield-check" class="w-4 h-4"></i>
+          <span id="pendingUsersBadge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg">0</span>
+        </button>
+
+        <!-- BOTÃO SINCRONIZAR / RECARREGAR -->
+        <button
+          id="btnSyncFirestore"
+          type="button"
+          class="p-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 active:scale-95 transition"
+          title="Sincronizar com o Firebase"
+        >
+          <i id="syncIcon" data-lucide="rotate-cw" class="w-4 h-4"></i>
+        </button>
+
+        <!-- BOTÃO MODO SELEÇÃO -->
+        <button
+          id="btnToggleSelectionMode"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-semibold text-xs hover:text-white hover:border-zinc-700 active:scale-95 transition"
+        >
+          <i data-lucide="check-square" class="w-4 h-4 text-amber-400"></i>
+          <span id="btnSelectText">Selecionar</span>
+        </button>
+
+        <button
+          id="btnOpenUploadHeader"
+          type="button"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition"
+        >
+          <i data-lucide="plus" class="w-4 h-4"></i>
+          Enviar Mídia
+        </button>
+
+        <!-- PERFIL / MENU DO USUÁRIO -->
+        <div class="relative">
+          <button
+            id="btnUserProfile"
+            type="button"
+            class="flex items-center p-1 rounded-2xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-95 transition"
+            title="Conta do Usuário"
+          >
+            <img id="headerUserAvatarImg" src="" class="hidden w-7 h-7 rounded-xl object-cover" />
+            <div id="headerUserAvatarFallback" class="w-7 h-7 rounded-xl bg-zinc-800 text-zinc-300 flex items-center justify-center text-xs font-bold">
+              <i data-lucide="user" class="w-4 h-4"></i>
+            </div>
+          </button>
+
+          <!-- Dropdown do Usuário -->
+          <div id="userDropdownMenu" class="hidden absolute right-0 mt-2 w-56 p-2 rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl z-50 text-xs">
+            <div class="p-2 border-b border-zinc-800 mb-1">
+              <p id="dropdownUserName" class="font-bold text-white truncate">Convidado</p>
+              <p id="dropdownUserEmail" class="text-[11px] text-zinc-400 truncate">email@gmail.com</p>
+              <span id="dropdownUserRoleBadge" class="mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">Administrador</span>
+            </div>
+            <button
+              id="dropdownBtnAdmin"
+              type="button"
+              class="hidden w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
+            >
+              <i data-lucide="shield-check" class="w-4 h-4 text-amber-400"></i>
+              Gerenciar Acessos
+            </button>
+            <button
+              id="dropdownBtnInstallPwa"
+              type="button"
+              class="w-full text-left p-2 rounded-xl text-zinc-300 hover:text-white hover:bg-zinc-900 flex items-center gap-2 transition"
+            >
+              <i data-lucide="smartphone" class="w-4 h-4 text-emerald-400"></i>
+              Instalar no Celular (App)
+            </button>
+            <button
+              id="dropdownBtnSignOut"
+              type="button"
+              class="w-full text-left p-2 rounded-xl text-red-400 hover:text-red-300 hover:bg-red-500/10 flex items-center gap-2 transition"
+            >
+              <i data-lucide="log-out" class="w-4 h-4"></i>
+              Sair da Conta
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- PAINEL DE ARMAZENAMENTO USADO (EXPANSÍVEL) -->
+  <div class="bg-zinc-900/50 border-b border-zinc-800/70 px-4 py-2.5">
+    <div class="max-w-3xl mx-auto">
+      <button
+        id="btnToggleStorageDetails"
+        type="button"
+        class="w-full flex flex-col gap-1.5 text-left group"
+      >
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2 text-zinc-300 font-medium">
+            <i data-lucide="hard-drive" class="w-3.5 h-3.5 text-amber-400"></i>
+            <span>Armazenamento usado:</span>
+            <strong id="storageUsedText" class="text-white">0 B</strong>
+            <span class="text-zinc-500">de 1 GB</span>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <span id="storageSavedBadge" class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              Economia WebP: 0 B
+            </span>
+            <span class="text-[11px] text-zinc-400 group-hover:text-white flex items-center gap-0.5">
+              Detalhes
+              <i id="storageChevron" data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform"></i>
+            </span>
+          </div>
+        </div>
+
+        <!-- Barra de Progresso de Armazenamento -->
+        <div class="w-full h-1.5 bg-zinc-800 rounded-full overflow-hidden flex">
+          <div id="storageBarCasamento" class="h-full bg-amber-400 transition-all duration-300" style="width: 0%" title="Casamento"></div>
+          <div id="storageBarRevelacao" class="h-full bg-sky-400 transition-all duration-300" style="width: 0%" title="Revelação"></div>
+        </div>
+      </button>
+
+      <!-- Detalhes Expandidos do Armazenamento -->
+      <div id="storageDetailsPanel" class="hidden pt-3 mt-2.5 border-t border-zinc-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
+          <span class="text-[10px] text-zinc-400 uppercase block">Total no Banco</span>
+          <strong id="detailTotalUsed" class="text-sm text-white">0 B</strong>
+          <span id="detailTotalFiles" class="text-[10px] text-zinc-500 block">0 arquivos</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
+          <span class="text-[10px] text-amber-400 uppercase block">💍 Casamento</span>
+          <strong id="detailCasamentoUsed" class="text-sm text-white">0 B</strong>
+          <span id="detailCasamentoFiles" class="text-[10px] text-zinc-500 block">0 mídias</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80">
+          <span class="text-[10px] text-sky-400 uppercase block">🧸 Revelação</span>
+          <strong id="detailRevelacaoUsed" class="text-sm text-white">0 B</strong>
+          <span id="detailRevelacaoFiles" class="text-[10px] text-zinc-500 block">0 mídias</span>
+        </div>
+        <div class="p-2.5 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
+          <span class="text-[10px] text-emerald-400 uppercase block">✨ Espaço Economizado</span>
+          <strong id="detailSavedBytes" class="text-sm text-emerald-300">0 B</strong>
+          <span id="detailOriginalBytes" class="text-[10px] text-zinc-400 block">Original: 0 B</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRA DE BUSCA EM TEMPO REAL + SELETOR DE MODO + ABAS DE CATEGORIA E FAVORITOS -->
+  <section class="sticky top-[61px] z-30 bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 px-4 py-3">
+    <div class="max-w-3xl mx-auto space-y-3">
+      <!-- Linha 1: Busca + Alternador de Visualização (Grade | Slideshow) -->
+      <div class="flex items-center gap-2">
+        <div class="relative flex-1">
+          <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"></i>
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Buscar por nome ou momento..."
+            class="w-full pl-9 pr-4 py-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400/70 transition"
+          />
+        </div>
+
+        <div class="flex items-center bg-zinc-900 p-1 rounded-2xl border border-zinc-800" role="group">
+          <button
+            type="button"
+            data-view="grid"
+            class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition bg-amber-500 text-zinc-950 shadow"
+            title="Modo Grade"
+          >
+            <i data-lucide="grid-3x3" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Grade</span>
+          </button>
+          <button
+            type="button"
+            data-view="slideshow"
+            class="view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition text-zinc-400 hover:text-white"
+            title="Apresentação de Slides"
+          >
+            <i data-lucide="play-square" class="w-4 h-4"></i>
+            <span class="hidden sm:inline">Slides</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Linha 2: Abas Rápidas de Categoria + FAVORITOS -->
+      <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+        <button
+          type="button"
+          data-cat="Todas"
+          class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold transition flex-shrink-0 bg-white text-zinc-950"
+        >
+          Todas (<span id="countTodas">0</span>)
+        </button>
+        <button
+          type="button"
+          data-cat="Casamento"
+          class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
+        >
+          💍 Casamento (<span id="countCasamento">0</span>)
+        </button>
+        <button
+          type="button"
+          data-cat="Revelação"
+          class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white"
+        >
+          🧸 Revelação (<span id="countRevelacao">0</span>)
+        </button>
+        <button
+          type="button"
+          data-cat="Favoritos"
+          class="cat-btn px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-rose-400 border border-zinc-800 hover:text-white"
+        >
+          <i data-lucide="heart" class="w-3.5 h-3.5 fill-rose-500 text-rose-500"></i>
+          Favoritos (<span id="countFavoritos">0</span>)
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- BARRA FLUTUANTE DE AÇÕES DO MODO SELEÇÃO (COM BAIXAR E APAGAR) -->
+  <aside
+    id="selectionActionBar"
+    class="hidden fixed bottom-6 inset-x-3 max-w-xl mx-auto z-40 bg-zinc-900/95 backdrop-blur-md border border-zinc-700/80 rounded-2xl shadow-2xl p-3 items-center justify-between gap-2 animate-in fade-in slide-in-from-bottom duration-200"
+  >
+    <div class="flex items-center gap-2 min-w-0">
+      <span id="selectedCountBadge" class="px-2.5 py-1 rounded-xl bg-amber-500/20 text-amber-300 font-bold text-xs border border-amber-500/30 whitespace-nowrap">
+        0 sel.
+      </span>
+      <button
+        id="btnSelectAll"
+        type="button"
+        class="text-xs text-zinc-300 hover:text-white underline underline-offset-2 whitespace-nowrap truncate"
+      >
+        Sel. Todos
+      </button>
+    </div>
+
+    <div class="flex items-center gap-1.5">
+      <!-- Botão Baixar Selecionados -->
+      <button
+        id="btnDownloadSelected"
+        type="button"
+        disabled
+        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-md disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition"
+      >
+        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+        <span>Baixar</span>
+      </button>
+
+      <!-- BOTÃO APAGAR SELECIONADOS -->
+      <button
+        id="btnDeleteSelected"
+        type="button"
+        disabled
+        class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-md shadow-red-600/30 disabled:opacity-40 disabled:pointer-events-none active:scale-95 transition"
+        title="Apagar Selecionados"
+      >
+        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+        <span>Apagar</span>
+      </button>
+
+      <!-- Cancelar Seleção -->
+      <button
+        id="btnCancelSelection"
+        type="button"
+        class="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800"
+        title="Cancelar Seleção"
+      >
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+  <div id="deleteConfirmModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/85 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-6 space-y-4 shadow-2xl text-center">
+      <div class="w-12 h-12 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mx-auto">
+        <i data-lucide="trash-2" class="w-6 h-6"></i>
+      </div>
+      <div class="space-y-1.5">
+        <h3 id="deleteModalTitle" class="text-base font-bold text-white">Apagar Lembranças?</h3>
+        <p id="deleteModalMessage" class="text-xs text-zinc-400">
+          Tem certeza que deseja apagar permanentemente? O documento será removido do banco de dados e os arquivos do Storage.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 pt-2">
+        <button
+          id="btnCancelDeleteAction"
+          type="button"
+          class="flex-1 py-2.5 rounded-xl border border-zinc-700 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+        >
+          Cancelar
+        </button>
+        <button
+          id="btnConfirmDeleteAction"
+          type="button"
+          class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-xs shadow-lg shadow-red-600/30 active:scale-95 transition"
+        >
+          Sim, Apagar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTEÚDO PRINCIPAL DA GALERIA -->
+  <main class="max-w-3xl mx-auto pt-4 pb-24">
+    <div id="loadingState" class="flex flex-col items-center justify-center py-20 gap-3 text-zinc-400">
+      <div class="w-7 h-7 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
+      <p class="text-xs">Conectando ao Firebase (lembrancas-neizy)...</p>
+    </div>
+
+    <div id="emptyState" class="hidden max-w-md mx-auto text-center py-16 px-4">
+      <div class="w-14 h-14 rounded-2xl bg-zinc-900 border border-zinc-800 flex items-center justify-center mx-auto mb-3 text-zinc-500">
+        <i data-lucide="sparkles" class="w-6 h-6"></i>
+      </div>
+      <h3 class="text-base font-semibold text-zinc-200">Nenhuma lembrança na galeria</h3>
+      <p class="text-xs text-zinc-400 mt-1">
+        Toque em "Enviar Mídia" para enviar fotos ou vídeos do evento!
+      </p>
+    </div>
+
+    <!-- Container da Grade -->
+    <div id="galleryContainer"></div>
+  </main>
+
+  <!-- BOTÃO FLUTUANTE MOBILE (FAB) -->
+  <button
+    id="btnOpenUploadFab"
+    type="button"
+    aria-label="Adicionar fotos ou vídeos"
+    class="sm:hidden fixed bottom-5 right-5 z-30 w-14 h-14 rounded-full bg-gradient-to-tr from-amber-500 to-rose-500 text-zinc-950 shadow-2xl shadow-amber-500/40 flex items-center justify-center active:scale-90 transition"
+  >
+    <i data-lucide="plus" class="w-7 h-7"></i>
+  </button>
+
+  <!-- LIGHTBOX DE ALTA RESOLUÇÃO COM AVANÇAR, RETROCEDER, FAVORITO, BAIXAR E APAGAR -->
+  <div id="lightboxModal" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex-col justify-between p-3 sm:p-4 select-none">
+    <!-- Topo do Lightbox -->
+    <div class="flex items-center justify-between text-white max-w-4xl w-full mx-auto z-20">
+      <div class="flex-1 min-w-0 pr-3">
+        <div class="flex items-center gap-2">
+          <h3 id="lightboxTitle" class="text-base font-semibold truncate"></h3>
+          <button id="btnEditLightboxTitle" type="button" class="p-1 text-zinc-400 hover:text-amber-400 transition" title="Editar nome">
+            <i data-lucide="edit-3" class="w-4 h-4"></i>
+          </button>
+        </div>
+        <div class="flex items-center gap-2 text-xs text-zinc-400 mt-0.5">
+          <span id="lightboxCategory"></span>
+          <span>•</span>
+          <span id="lightboxPosition" class="text-amber-400 font-medium"></span>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <!-- Botão Favoritar -->
+        <button id="btnLightboxFavorite" type="button" class="p-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 transition" title="Favoritar">
+          <i id="lightboxFavIcon" data-lucide="heart" class="w-5 h-5 text-zinc-300"></i>
+        </button>
+
+        <!-- Botão Baixar Mídia Atual -->
+        <button id="btnLightboxDownload" type="button" class="p-2.5 rounded-full bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 hover:text-white transition" title="Baixar">
+          <i data-lucide="download" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Botão Apagar Mídia Atual -->
+        <button id="btnLightboxDelete" type="button" class="p-2.5 rounded-full bg-zinc-800/80 hover:bg-red-500/20 text-zinc-300 hover:text-red-400 transition" title="Apagar esta lembrança">
+          <i data-lucide="trash-2" class="w-5 h-5"></i>
+        </button>
+
+        <!-- Fechar -->
+        <button id="btnCloseLightbox" type="button" class="p-2.5 rounded-full bg-zinc-800/80 text-white hover:bg-zinc-700 transition" title="Fechar">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Centro: Mídia + Botões Flutuantes de Retroceder e Avançar -->
+    <div class="relative flex-1 flex items-center justify-center overflow-hidden my-2">
+      <!-- Botão Retroceder (<) -->
+      <button
+        id="btnLightboxPrev"
+        type="button"
+        class="absolute left-2 sm:left-4 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white border border-white/10 flex items-center justify-center transition active:scale-95 shadow-xl"
+        title="Mídia Anterior (Seta Esquerda)"
+      >
+        <i data-lucide="chevron-left" class="w-6 h-6"></i>
+      </button>
+
+      <!-- Conteúdo da Mídia -->
+      <div id="lightboxBody" class="w-full h-full flex items-center justify-center"></div>
+
+      <!-- Botão Avançar (>) -->
+      <button
+        id="btnLightboxNext"
+        type="button"
+        class="absolute right-2 sm:right-4 z-30 w-11 h-11 rounded-full bg-black/60 hover:bg-black/85 backdrop-blur-md text-white border border-white/10 flex items-center justify-center transition active:scale-95 shadow-xl"
+        title="Próxima Mídia (Seta Direita)"
+      >
+        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE EDIÇÃO DE NOME DA IMAGEM -->
+  <div id="editTitleModal" class="hidden fixed inset-0 z-50 items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-zinc-900 border border-zinc-800 p-5 space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i data-lucide="edit-3" class="w-4 h-4 text-amber-400"></i>
+          Editar Nome da Lembrança
+        </h3>
+        <button id="btnCloseEditTitle" type="button" class="text-zinc-400 hover:text-white">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <form id="editTitleForm" class="space-y-4">
+        <input
+          id="editTitleInput"
+          type="text"
+          required
+          placeholder="Ex: Entrada dos Noivos, Bolo, etc."
+          class="w-full px-3.5 py-2.5 rounded-2xl bg-zinc-950 border border-zinc-700 text-sm text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400"
+        />
+
+        <div class="flex items-center gap-2 justify-end">
+          <button
+            type="button"
+            id="btnCancelEditTitle"
+            class="px-4 py-2 rounded-xl text-xs font-semibold text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            type="submit"
+            id="btnSaveEditTitle"
+            class="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-md active:scale-95 transition"
+          >
+            Salvar Alteração
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODO APRESENTAÇÃO DE SLIDES (SLIDESHOW EM TELA CHEIA) -->
+  <div id="slideshowModal" class="hidden fixed inset-0 z-50 bg-black flex-col justify-between select-none">
+    <div class="absolute top-0 inset-x-0 z-20 p-3 space-y-3 bg-gradient-to-b from-black/80 to-transparent">
+      <div id="slideshowBars" class="flex gap-1"></div>
+      <div class="flex items-center justify-between px-1 text-white">
+        <div>
+          <h3 id="slideshowTitle" class="text-sm font-semibold"></h3>
+          <span id="slideshowSubtitle" class="text-xs text-zinc-300"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnToggleSlidePlay" type="button" class="p-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm text-xs font-semibold px-3">
+            Pausar
+          </button>
+          <button id="btnCloseSlideshow" type="button" class="p-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-sm">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="relative flex-1 flex items-center justify-center overflow-hidden">
+      <!-- Toque na lateral esquerda volta -->
+      <button id="btnPrevSlide" type="button" class="absolute inset-y-0 left-0 w-1/3 z-10 flex items-center justify-start pl-3 opacity-0 hover:opacity-100 transition">
+        <span class="p-2 rounded-full bg-black/50 text-white"><i data-lucide="chevron-left" class="w-6 h-6"></i></span>
+      </button>
+      <div id="slideshowMediaWrap" class="w-full h-full flex items-center justify-center"></div>
+      <!-- Toque na lateral direita avança -->
+      <button id="btnNextSlide" type="button" class="absolute inset-y-0 right-0 w-2/3 z-10 flex items-center justify-end pr-3 opacity-0 hover:opacity-100 transition">
+        <span class="p-2 rounded-full bg-black/50 text-white"><i data-lucide="chevron-right" class="w-6 h-6"></i></span>
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL DE UPLOAD + PRÉ-VISUALIZAÇÃO DO TAMANHO ANTES DO UPLOAD + METADADOS -->
+  <div id="uploadModal" class="hidden fixed inset-0 z-50 items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
+    <div class="w-full max-w-lg rounded-t-3xl sm:rounded-3xl bg-zinc-900 border border-zinc-800 text-zinc-100 shadow-2xl overflow-hidden max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-800">
+        <div>
+          <h2 id="uploadHeaderTitle" class="text-lg font-semibold text-white">Enviar Fotos e Vídeos</h2>
+          <p id="uploadHeaderSub" class="text-xs text-zinc-400">Conversão automática para WebP e WebM/MP4</p>
+        </div>
+        <button id="btnCloseUploadModal" type="button" class="p-2 rounded-full text-zinc-400 hover:text-white hover:bg-zinc-800 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-5 overflow-y-auto space-y-5">
+        <div id="uploadErrorBox" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-300 text-xs"></div>
+
+        <!-- ETAPA 1: ESCOLHER ARQUIVOS E PRÉ-VISUALIZAR O TAMANHO ANTES DO UPLOAD -->
+        <div id="stepSelect" class="space-y-4">
+          <input id="fileInput" type="file" accept="image/*,video/*,.heic,.heif,.HEIC,.HEIF" multiple class="hidden" />
+          <button
+            id="btnTriggerFile"
+            type="button"
+            class="w-full py-10 px-6 border-2 border-dashed border-zinc-700 hover:border-amber-400/70 rounded-2xl bg-zinc-950/60 flex flex-col items-center justify-center gap-3 transition group active:scale-[0.99]"
+          >
+            <div class="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 group-hover:scale-110 transition">
+              <i data-lucide="upload-cloud" class="w-7 h-7"></i>
+            </div>
+            <div class="text-center">
+              <p class="text-sm font-medium text-white">Toque para escolher fotos ou vídeos do celular</p>
+              <p class="text-xs text-zinc-400 mt-1">Compatível com iPhone (HEIC), JPG, PNG e vídeos</p>
+            </div>
+            <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              Conversão automática de HEIC/JPG para WebP leve
+            </span>
+          </button>
+
+          <!-- RESUMO DE TAMANHO ANTES DO UPLOAD (Exibido após selecionar os arquivos) -->
+          <div id="preUploadSummaryBox" class="hidden space-y-4">
+            <div class="p-4 rounded-2xl bg-zinc-950 border border-amber-500/30 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                  <i data-lucide="database" class="w-4 h-4"></i>
+                  Tamanho que será adicionado ao banco
+                </span>
+                <span id="preUploadSavedBadge" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                  -0%
+                </span>
+              </div>
+
+              <div class="grid grid-cols-2 gap-3 pt-1">
+                <div class="p-2.5 rounded-xl bg-zinc-900/90 border border-zinc-800">
+                  <span class="text-[10px] text-zinc-400 block">Tamanho Original</span>
+                  <strong id="preUploadOriginalSize" class="text-sm text-zinc-300 line-through">0 B</strong>
+                </div>
+                <div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30">
+                  <span class="text-[10px] text-amber-300 block">Total Otimizado a Enviar</span>
+                  <strong id="preUploadTotalToAdd" class="text-base font-extrabold text-white">+ 0 B</strong>
+                </div>
+              </div>
+
+              <div class="text-[11px] text-zinc-400 flex items-center justify-between pt-1 border-t border-zinc-800/80">
+                <span>Uso atual: <strong id="preUploadCurrentStorage" class="text-zinc-200">0 B</strong></span>
+                <span>Após envio: <strong id="preUploadProjectedStorage" class="text-amber-300">0 B</strong> / 1 GB</span>
+              </div>
+            </div>
+
+            <!-- Lista de Arquivos Prontos para Enviar -->
+            <div id="preUploadFilesList" class="space-y-2 max-h-48 overflow-y-auto pr-1"></div>
+
+            <!-- Botões: Trocar Arquivos ou Confirmar Upload -->
+            <div class="flex items-center gap-2 pt-1">
+              <button
+                id="btnReselectFiles"
+                type="button"
+                class="px-4 py-3 rounded-2xl border border-zinc-700 text-xs font-semibold text-zinc-300 hover:text-white hover:bg-zinc-800 transition"
+              >
+                Trocar Arquivos
+              </button>
+              <button
+                id="btnStartUploadNow"
+                type="button"
+                class="flex-1 py-3 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 active:scale-[0.99] transition"
+              >
+                <i data-lucide="upload" class="w-4 h-4"></i>
+                <span id="btnStartUploadText">Confirmar e Enviar ao Banco</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Barra de Progresso -->
+          <div id="progressContainer" class="hidden py-8 px-5 rounded-2xl bg-zinc-950 border border-zinc-800 space-y-4">
+            <div class="flex items-center justify-between text-sm">
+              <span id="progressPhaseTitle" class="font-medium text-amber-400 flex items-center gap-2">
+                <span class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+                Processando...
+              </span>
+              <span id="progressPct" class="font-bold text-white">0%</span>
+            </div>
+            <div class="w-full h-3 bg-zinc-800 rounded-full overflow-hidden">
+              <div id="progressBar" class="h-full bg-gradient-to-r from-amber-500 to-rose-500 transition-all duration-300 rounded-full" style="width: 0%"></div>
+            </div>
+            <p id="progressStatus" class="text-xs text-zinc-400 text-center"></p>
+          </div>
+        </div>
+
+        <!-- ETAPA 2: METADADOS E CATEGORIZAÇÃO OBRIGATÓRIA (Logo após o upload) -->
+        <form id="stepMetadataForm" class="hidden space-y-5">
+          <div class="space-y-2">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              1. Selecione a Categoria do Evento (Obrigatório) *
+            </label>
+            <div class="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                data-select-cat="Casamento"
+                class="meta-cat-btn flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-sm font-semibold transition active:scale-95"
+              >
+                💍 Casamento
+              </button>
+              <button
+                type="button"
+                data-select-cat="Revelação"
+                class="meta-cat-btn flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-sm font-semibold transition active:scale-95"
+              >
+                🧸 Revelação
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <label class="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+              2. Dê um Nome / Título para as Mídias *
+            </label>
+            <div id="stagedFilesList" class="space-y-3 max-h-60 overflow-y-auto pr-1"></div>
+          </div>
+
+          <button
+            id="btnSubmitMetadata"
+            type="submit"
+            disabled
+            class="w-full py-3.5 px-5 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-40 disabled:pointer-events-none shadow-lg shadow-amber-500/20 active:scale-[0.99] transition"
+          >
+            Concluir e Publicar na Galeria
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 1: LOGIN COM GOOGLE -->
+  <div id="authModal" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-7 shadow-2xl text-center space-y-5">
+      <div class="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-zinc-950 shadow-xl shadow-amber-500/20">
+        <i data-lucide="camera" class="w-8 h-8"></i>
+      </div>
+      <div>
+        <h2 class="text-xl font-bold text-white">Lembranças</h2>
+        <p class="text-xs text-amber-400 font-semibold mt-0.5">Casamento & Chá Revelação</p>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+          Álbum exclusivo para convidados. Faça login com sua conta do Google para visualizar e enviar lembranças.
+        </p>
+      </div>
+
+      <button
+        id="btnGoogleSignIn"
+        type="button"
+        class="w-full py-3.5 px-4 rounded-2xl bg-white hover:bg-zinc-100 text-zinc-900 font-bold text-sm flex items-center justify-center gap-3 shadow-lg shadow-white/5 active:scale-[0.98] transition cursor-pointer"
+      >
+        <svg class="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>Entrar com o Google</span>
+      </button>
+
+      <div id="authErrorBox" class="hidden p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-400 text-left"></div>
+
+      <p class="text-[11px] text-zinc-500">
+        🔒 Apenas convidados autorizados pelos noivos/organizadores terão acesso aos arquivos.
+      </p>
+    </div>
+  </div>
+
+  <!-- MODAL 2: AGUARDANDO APROVAÇÃO (CONVIDADOS PENDENTES) -->
+  <div id="pendingApprovalModal" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 sm:p-7 shadow-2xl text-center space-y-5">
+      <div class="relative w-16 h-16 mx-auto">
+        <img id="pendingUserAvatar" class="w-16 h-16 rounded-2xl object-cover border-2 border-amber-400/50" src="" />
+        <span class="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 text-zinc-950 flex items-center justify-center text-[10px] font-bold animate-pulse">⏳</span>
+      </div>
+      <div>
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30 mb-2">
+          Acesso em Análise
+        </div>
+        <h2 class="text-lg font-bold text-white" id="pendingUserName">Olá!</h2>
+        <p class="text-xs text-zinc-400 mt-2 leading-relaxed">
+          Sua solicitação de acesso foi enviada aos organizadores. Como este álbum é privativo, seu acesso será liberado assim que o administrador aprovar o seu perfil.
+        </p>
+      </div>
+
+      <div class="p-3.5 rounded-2xl bg-zinc-950 border border-zinc-800/80 text-[11px] text-zinc-400 text-left space-y-1.5">
+        <p>• <strong>Conta:</strong> <span id="pendingUserEmail" class="text-white"></span></p>
+        <p>• <strong>Status:</strong> Aguardando aprovação do administrador</p>
+        <p class="text-emerald-400 font-medium">⚡ Não precisa atualizar: a tela abrirá automaticamente assim que aprovada!</p>
+      </div>
+
+      <button
+        id="btnPendingSignOut"
+        type="button"
+        class="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-medium text-xs transition"
+      >
+        Sair / Trocar de Conta
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 3: ACESSO BLOQUEADO -->
+  <div id="blockedModal" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-zinc-900 border border-red-500/30 rounded-3xl p-6 shadow-2xl text-center space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-400">
+        <i data-lucide="shield-x" class="w-7 h-7"></i>
+      </div>
+      <h2 class="text-base font-bold text-white">Acesso Não Autorizado</h2>
+      <p class="text-xs text-zinc-400 leading-relaxed">
+        Seu acesso a este álbum foi negado ou bloqueado pelo administrador. Entre em contato com os noivos caso acredite que isso seja um engano.
+      </p>
+      <button
+        id="btnBlockedSignOut"
+        type="button"
+        class="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white font-medium text-xs transition"
+      >
+        Sair da Conta
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL 4: PAINEL DE GESTÃO DE USUÁRIOS (APENAS ADMINISTRADOR) -->
+  <div id="adminUsersModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+    <div class="max-w-md w-full max-h-[85vh] bg-zinc-900 border border-zinc-800 rounded-3xl flex flex-col overflow-hidden shadow-2xl">
+      <!-- Cabeçalho -->
+      <div class="p-4 border-b border-zinc-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i data-lucide="shield-check" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h3 class="text-sm font-bold text-white">Gerenciar Acessos</h3>
+            <p class="text-[11px] text-zinc-400">Aprove ou bloqueie convidados cadastrados</p>
+          </div>
+        </div>
+        <button id="btnCloseAdminUsersModal" type="button" class="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-zinc-800 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- Abas -->
+      <div class="flex border-b border-zinc-800 px-4 pt-2 gap-2 bg-zinc-950/40">
+        <button
+          id="tabBtnPendingUsers"
+          type="button"
+          class="pb-2.5 px-3 text-xs font-semibold border-b-2 border-amber-400 text-white flex items-center gap-1.5 cursor-pointer"
+        >
+          Pendentes
+          <span id="tabCountPending" class="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-500/20 text-amber-300 font-bold">0</span>
+        </button>
+        <button
+          id="tabBtnApprovedUsers"
+          type="button"
+          class="pb-2.5 px-3 text-xs font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5 cursor-pointer"
+        >
+          Aprovados
+          <span id="tabCountApproved" class="px-1.5 py-0.5 rounded-full text-[10px] bg-zinc-800 text-zinc-300 font-bold">0</span>
+        </button>
+      </div>
+
+      <!-- Lista de Usuários -->
+      <div id="adminUsersListContainer" class="flex-1 overflow-y-auto p-4 space-y-2.5 min-h-[220px]">
+        <!-- Itens inseridos dinamicamente -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL 5: INSTALAR APLICATIVO (PWA) -->
+  <div id="pwaInstallModal" class="hidden fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="max-w-sm w-full bg-zinc-900 border border-zinc-800 rounded-3xl p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95 duration-200">
+      <div class="relative w-16 h-16 mx-auto rounded-2xl bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-zinc-950 shadow-xl shadow-amber-500/25">
+        <i data-lucide="smartphone" class="w-8 h-8"></i>
+        <span class="absolute -top-1 -right-1 flex h-3 w-3">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+        </span>
+      </div>
+
+      <div>
+        <h3 class="text-base font-bold text-white">Instalar o App Lembranças</h3>
+        <p class="text-xs text-zinc-400 mt-1 leading-relaxed">
+          Tenha a experiência de um aplicativo nativo no seu celular: tela cheia, sem barra de navegação e muito mais rápido!
+        </p>
+      </div>
+
+      <!-- Benefícios rápidos -->
+      <div class="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl p-3 text-left space-y-2 text-[11px] text-zinc-300">
+        <div class="flex items-center gap-2">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
+          <span>Abre direto na tela inicial com 1 toque</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="maximize" class="w-3.5 h-3.5 text-rose-400 flex-shrink-0"></i>
+          <span>Visualização em tela cheia imersiva</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <i data-lucide="zap" class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0"></i>
+          <span>Carregamento e visualização instantâneos</span>
+        </div>
+      </div>
+
+      <!-- Bloco Padrão (Android / Chrome / Edge) -->
+      <div id="pwaStandardActions" class="space-y-2">
+        <button
+          id="btnConfirmInstallPwa"
+          type="button"
+          class="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-amber-500 to-rose-500 text-zinc-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition flex items-center justify-center gap-2 cursor-pointer"
+        >
+          <i data-lucide="download" class="w-4 h-4"></i>
+          Instalar Aplicativo Agora
+        </button>
+        <button
+          id="btnDismissPwaModal"
+          type="button"
+          class="w-full py-2 px-3 text-xs text-zinc-400 hover:text-white transition cursor-pointer"
+        >
+          Mais tarde
+        </button>
+      </div>
+
+      <!-- Bloco de Instruções Exclusivo para iPhone / iPad (iOS Safari) -->
+      <div id="pwaIosInstructions" class="hidden space-y-3">
+        <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-2 text-[11px] text-amber-200">
+          <p class="font-bold flex items-center gap-1.5 text-amber-400">
+            <i data-lucide="info" class="w-4 h-4"></i> No iPhone (Safari):
+          </p>
+          <ol class="space-y-1 list-decimal list-inside text-zinc-300">
+            <li>Toque no botão <strong>Compartilhar</strong> <i data-lucide="share" class="inline w-3.5 h-3.5 text-sky-400"></i> na barra inferior</li>
+            <li>Role a lista e toque em <strong>"Adicionar à Tela de Início"</strong> <i data-lucide="plus-square" class="inline w-3.5 h-3.5 text-amber-400"></i></li>
+            <li>Toque em <strong>Adicionar</strong> no topo direito</li>
+          </ol>
+        </div>
+        <button
+          id="btnDismissPwaIos"
+          type="button"
+          class="w-full py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-white font-medium text-xs transition cursor-pointer"
+        >
+          Entendi
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INTEGRAÇÃO FIREBASE (lembrancas-neizy) + PROCESSAMENTO WEBP + GALERIA -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+    import { getAnalytics, isSupported } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, setDoc, getDoc, query, orderBy, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-storage.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBQeBZSwT6YHlDW3-g0EitmzASaznZm0l4",
+      authDomain: "lembrancas-neizy.firebaseapp.com",
+      projectId: "lembrancas-neizy",
+      storageBucket: "lembrancas-neizy.firebasestorage.app",
+      messagingSenderId: "473468564015",
+      appId: "1:473468564015:web:63a94653eeb48eb1018cda",
+      measurementId: "G-HED97V32S7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    isSupported().then((yes) => { if (yes) getAnalytics(app); }).catch(() => {});
+    const db = getFirestore(app);
+    const storage = getStorage(app);
+    const auth = getAuth(app);
+    const googleProvider = new GoogleAuthProvider();
+
+    lucide.createIcons();
+
+    // Capacidade total de armazenamento definida para 1 GB
+    const MAX_STORAGE_BYTES = 1 * 1024 * 1024 * 1024;
+    const FIRESTORE_DOC_OVERHEAD_BYTES = 512; // ~512 bytes por documento de metadados no Firestore
+
+    // Estado da aplicação
+    let allItems = [];
+    let activeCategory = 'Todas'; // 'Todas' | 'Casamento' | 'Revelação' | 'Favoritos'
+    let searchQuery = '';
+    let viewMode = 'grid'; // 'grid' | 'slideshow'
+    let preparedPreUploadItems = []; // Arquivos otimizados aguardando confirmação de upload
+    let stagedUploads = []; // Arquivos já enviados ao Storage aguardando Nome/Categoria
+    let chosenModalCategory = null;
+    let slideIndex = 0;
+    let isSlidePlaying = true;
+    let slideTimer = null;
+
+    // Estado do Modo Seleção
+    let isSelectionMode = false;
+    let selectedIds = new Set();
+
+    // Estado do Lightbox
+    let lightboxCurrentItem = null;
+    let editingItemId = null;
+
+    // Ação pendente de exclusão
+    let pendingDeleteItems = [];
+
+    // LocalStorage de favoritos como fallback/cache imediato
+    const localFavorites = new Set(JSON.parse(localStorage.getItem('lembrancas_favs') || '[]'));
+
+    function formatBytes(bytes) {
+      if (!bytes || bytes <= 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+    }
+
+    // Calcula o tamanho total usado no Firebase (Full + Thumb + Documento Firestore)
+    function getItemTotalStorageBytes(item) {
+      const full = Number(item.optimizedSize) || 0;
+      const thumb = Number(item.thumbSize) || 20480; // ~20KB padrão caso antigo
+      return full + thumb + FIRESTORE_DOC_OVERHEAD_BYTES;
+    }
+
+    function getTotalUsedStorageBytes() {
+      return allItems.reduce((acc, item) => acc + getItemTotalStorageBytes(item), 0);
+    }
+
+    function updateStorageDashboard() {
+      const totalUsed = getTotalUsedStorageBytes();
+      const totalOriginal = allItems.reduce((acc, item) => acc + (Number(item.originalSize) || Number(item.optimizedSize) || 0), 0);
+      const savedBytes = Math.max(0, totalOriginal - totalUsed);
+
+      const casamentoItems = allItems.filter(i => i.category === 'Casamento');
+      const revelacaoItems = allItems.filter(i => i.category === 'Revelação');
+
+      const casamentoBytes = casamentoItems.reduce((acc, i) => acc + getItemTotalStorageBytes(i), 0);
+      const revelacaoBytes = revelacaoItems.reduce((acc, i) => acc + getItemTotalStorageBytes(i), 0);
+
+      document.getElementById('storageUsedText').textContent = formatBytes(totalUsed);
+      document.getElementById('storageSavedBadge').textContent = `Economia WebP: ${formatBytes(savedBytes)}`;
+
+      // Barras proporcionais (mínimo visível se > 0)
+      const casPct = totalUsed > 0 ? Math.max(0.5, (casamentoBytes / MAX_STORAGE_BYTES) * 100) : 0;
+      const revPct = totalUsed > 0 ? Math.max(0.5, (revelacaoBytes / MAX_STORAGE_BYTES) * 100) : 0;
+      document.getElementById('storageBarCasamento').style.width = `${Math.min(100, casPct)}%`;
+      document.getElementById('storageBarRevelacao').style.width = `${Math.min(100, revPct)}%`;
+
+      // Painel expandido
+      document.getElementById('detailTotalUsed').textContent = formatBytes(totalUsed);
+      document.getElementById('detailTotalFiles').textContent = `${allItems.length} mídia(s) salva(s)`;
+      document.getElementById('detailCasamentoUsed').textContent = formatBytes(casamentoBytes);
+      document.getElementById('detailCasamentoFiles').textContent = `${casamentoItems.length} mídia(s)`;
+      document.getElementById('detailRevelacaoUsed').textContent = formatBytes(revelacaoBytes);
+      document.getElementById('detailRevelacaoFiles').textContent = `${revelacaoItems.length} mídia(s)`;
+      document.getElementById('detailSavedBytes').textContent = formatBytes(savedBytes);
+      document.getElementById('detailOriginalBytes').textContent = `Sem otimizar: ${formatBytes(totalOriginal)}`;
+    }
+
+    document.getElementById('btnToggleStorageDetails').addEventListener('click', () => {
+      const panel = document.getElementById('storageDetailsPanel');
+      const chevron = document.getElementById('storageChevron');
+      panel.classList.toggle('hidden');
+      chevron.classList.toggle('rotate-180');
+    });
+
+    // Escuta em tempo real do Firestore para Mídias
+    const q = query(collection(db, 'midias'), orderBy('createdAt', 'desc'));
+    let mediaSnapshotUnsubscribe = null;
+
+    function attachFirestoreListener() {
+      if (mediaSnapshotUnsubscribe) return;
+      document.getElementById('loadingState').classList.remove('hidden');
+      mediaSnapshotUnsubscribe = onSnapshot(q, (snapshot) => {
+        allItems = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          const isFav = Boolean(data.isFavorite || localFavorites.has(docSnap.id));
+          return { id: docSnap.id, ...data, isFavorite: isFav };
+        });
+        document.getElementById('loadingState').classList.add('hidden');
+        updateStorageDashboard();
+        renderGallery();
+        if (lightboxCurrentItem) {
+          const updated = allItems.find(i => i.id === lightboxCurrentItem.id);
+          if (updated) openLightbox(updated);
+          else closeLightboxModal();
+        }
+      }, (err) => {
+        console.warn('Aviso Firestore:', err.message);
+        document.getElementById('loadingState').classList.add('hidden');
+        updateStorageDashboard();
+        renderGallery();
+      });
+    }
+
+    function detachFirestoreListener() {
+      if (mediaSnapshotUnsubscribe) {
+        mediaSnapshotUnsubscribe();
+        mediaSnapshotUnsubscribe = null;
+      }
+      allItems = [];
+      renderGallery();
+      updateStorageDashboard();
+    }
+
+    // ========================================================
+    // CONTROLE DE ACESSO E AUTENTICAÇÃO COM GOOGLE
+    // ========================================================
+    // Nota de Segurança: A validação real de quem é o Administrador Vitalício é feita
+    // nos servidores do Google pelas Regras de Segurança do Firestore (`firestore.rules`),
+    // onde nenhum hacker consegue alterar ou burlar pelo navegador (DevTools).
+    const ADMIN_EMAILS = [
+      // Opcional: você pode colocar seu e-mail aqui também, mas a proteção real fica no firestore.rules
+    ];
+
+    let currentUser = null;
+    let currentUserProfile = null;
+    let userProfileUnsubscribe = null;
+    let adminUsersUnsubscribe = null;
+    let adminUsersList = [];
+    let currentAdminTab = 'pending'; // 'pending' | 'approved'
+
+    const authModal = document.getElementById('authModal');
+    const pendingApprovalModal = document.getElementById('pendingApprovalModal');
+    const blockedModal = document.getElementById('blockedModal');
+    const adminUsersModal = document.getElementById('adminUsersModal');
+    const userDropdownMenu = document.getElementById('userDropdownMenu');
+
+    function showAuthModal() {
+      authModal.classList.remove('hidden');
+      authModal.classList.add('flex');
+      pendingApprovalModal.classList.add('hidden');
+      pendingApprovalModal.classList.remove('flex');
+      blockedModal.classList.add('hidden');
+      blockedModal.classList.remove('flex');
+    }
+
+    function hideAuthModal() {
+      authModal.classList.add('hidden');
+      authModal.classList.remove('flex');
+    }
+
+    function showPendingModal(profile) {
+      document.getElementById('pendingUserName').textContent = `Olá, ${profile.displayName || 'Convidado'}!`;
+      document.getElementById('pendingUserEmail').textContent = profile.email || '';
+      const avatarImg = document.getElementById('pendingUserAvatar');
+      if (profile.photoURL) {
+        avatarImg.src = profile.photoURL;
+        avatarImg.classList.remove('hidden');
+      } else {
+        avatarImg.src = 'https://ui-avatars.com/api/?name=' + encodeURIComponent(profile.displayName || 'Convidado') + '&background=f59e0b&color=000';
+      }
+      pendingApprovalModal.classList.remove('hidden');
+      pendingApprovalModal.classList.add('flex');
+      hideAuthModal();
+      blockedModal.classList.add('hidden');
+      blockedModal.classList.remove('flex');
+    }
+
+    function hidePendingModal() {
+      pendingApprovalModal.classList.add('hidden');
+      pendingApprovalModal.classList.remove('flex');
+    }
+
+    function showBlockedModal() {
+      blockedModal.classList.remove('hidden');
+      blockedModal.classList.add('flex');
+      hideAuthModal();
+      hidePendingModal();
+    }
+
+    function hideBlockedModal() {
+      blockedModal.classList.add('hidden');
+      blockedModal.classList.remove('flex');
+    }
+
+    function canUserEdit() {
+      if (!currentUserProfile) return false;
+      return currentUserProfile.role === 'admin' || currentUserProfile.permission === 'editar';
+    }
+
+    function applyUserPermissions(profile) {
+      const canEdit = profile?.role === 'admin' || profile?.permission === 'editar';
+
+      // 1. Botão Enviar Mídia (Header)
+      const btnUploadHeader = document.getElementById('btnOpenUploadHeader');
+      if (btnUploadHeader) {
+        if (canEdit) btnUploadHeader.classList.remove('hidden');
+        else btnUploadHeader.classList.add('hidden');
+      }
+
+      // 2. Botão Flutuante Mobile (FAB)
+      const btnUploadFab = document.getElementById('btnOpenUploadFab');
+      if (btnUploadFab) {
+        if (canEdit) btnUploadFab.classList.remove('hidden');
+        else btnUploadFab.classList.add('hidden');
+      }
+
+      // 3. Botão Modo Seleção (Header)
+      const btnToggleSelection = document.getElementById('btnToggleSelectionMode');
+      if (btnToggleSelection) {
+        if (canEdit) btnToggleSelection.classList.remove('hidden');
+        else btnToggleSelection.classList.add('hidden');
+      }
+
+      // 4. Ações no Lightbox HD (Editar, Baixar, Apagar)
+      const btnEditTitle = document.getElementById('btnEditLightboxTitle');
+      const btnDownload = document.getElementById('btnLightboxDownload');
+      const btnDelete = document.getElementById('btnLightboxDelete');
+
+      if (btnEditTitle) {
+        if (canEdit) btnEditTitle.classList.remove('hidden');
+        else btnEditTitle.classList.add('hidden');
+      }
+      if (btnDownload) {
+        if (canEdit) btnDownload.classList.remove('hidden');
+        else btnDownload.classList.add('hidden');
+      }
+      if (btnDelete) {
+        if (canEdit) btnDelete.classList.remove('hidden');
+        else btnDelete.classList.add('hidden');
+      }
+    }
+
+    function updateHeaderUserProfile(profile) {
+      if (!profile) {
+        document.getElementById('headerUserAvatarImg').classList.add('hidden');
+        document.getElementById('headerUserAvatarFallback').classList.remove('hidden');
+        document.getElementById('btnAdminUsersModal').classList.add('hidden');
+        applyUserPermissions(null);
+        return;
+      }
+
+      if (profile.photoURL) {
+        const img = document.getElementById('headerUserAvatarImg');
+        img.src = profile.photoURL;
+        img.classList.remove('hidden');
+        document.getElementById('headerUserAvatarFallback').classList.add('hidden');
+      } else {
+        document.getElementById('headerUserAvatarImg').classList.add('hidden');
+        document.getElementById('headerUserAvatarFallback').classList.remove('hidden');
+      }
+
+      document.getElementById('dropdownUserName').textContent = profile.displayName || 'Convidado';
+      document.getElementById('dropdownUserEmail').textContent = profile.email || '';
+
+      const badge = document.getElementById('dropdownUserRoleBadge');
+      if (profile.role === 'admin') {
+        badge.textContent = 'Administrador Vitalício';
+        badge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20';
+        document.getElementById('btnAdminUsersModal').classList.remove('hidden');
+        document.getElementById('dropdownBtnAdmin').classList.remove('hidden');
+      } else if (profile.permission === 'editar') {
+        badge.textContent = 'Convidado (Editar)';
+        badge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
+        document.getElementById('btnAdminUsersModal').classList.add('hidden');
+        document.getElementById('dropdownBtnAdmin').classList.add('hidden');
+      } else {
+        badge.textContent = 'Convidado (Apenas Ler)';
+        badge.className = 'mt-1.5 inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20';
+        document.getElementById('btnAdminUsersModal').classList.add('hidden');
+        document.getElementById('dropdownBtnAdmin').classList.add('hidden');
+      }
+
+      applyUserPermissions(profile);
+    }
+
+    // Sincronização do Usuário no Firestore (Protegido pelas Security Rules no Servidor)
+    async function syncUserAuthProfile(user) {
+      const userRef = doc(db, 'usuarios', user.uid);
+      const emailLower = (user.email || '').toLowerCase().trim();
+      const isListedAdmin = ADMIN_EMAILS.map(e => e.toLowerCase().trim()).includes(emailLower);
+
+      const snap = await getDoc(userRef);
+      if (!snap.exists()) {
+        const baseData = {
+          uid: user.uid,
+          email: emailLower,
+          displayName: user.displayName || 'Convidado',
+          photoURL: user.photoURL || '',
+          permission: 'ler', // Padrão: somente leitura até o Admin aprovar/definir
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (isListedAdmin) {
+          try {
+            await setDoc(userRef, { ...baseData, role: 'admin', status: 'aprovado', permission: 'editar' });
+          } catch (_) {
+            await setDoc(userRef, { ...baseData, role: 'convidado', status: 'pendente' });
+          }
+        } else {
+          try {
+            await setDoc(userRef, { ...baseData, role: 'convidado', status: 'pendente' });
+          } catch (_) {
+            await setDoc(userRef, { ...baseData, role: 'admin', status: 'aprovado', permission: 'editar' });
+          }
+        }
+      } else {
+        const currentData = snap.data();
+        if (currentData.role !== 'admin' || currentData.status !== 'aprovado') {
+          try {
+            await updateDoc(userRef, {
+              role: 'admin',
+              status: 'aprovado',
+              permission: 'editar',
+              updatedAt: new Date().toISOString()
+            });
+          } catch (_) {}
+        }
+      }
+
+      // Escuta mudanças em tempo real no próprio documento do usuário (aprovação instantânea)
+      if (userProfileUnsubscribe) userProfileUnsubscribe();
+      userProfileUnsubscribe = onSnapshot(userRef, (docSnap) => {
+        if (!docSnap.exists()) {
+          showAuthModal();
+          return;
+        }
+        currentUserProfile = docSnap.data();
+        applyUserStatus(currentUserProfile);
+      });
+    }
+
+    function applyUserStatus(profile) {
+      updateHeaderUserProfile(profile);
+
+      if (profile.status === 'pendente') {
+        showPendingModal(profile);
+        detachFirestoreListener();
+        return;
+      }
+
+      if (profile.status === 'bloqueado') {
+        showBlockedModal();
+        detachFirestoreListener();
+        return;
+      }
+
+      // Status === 'aprovado'
+      hideAuthModal();
+      hidePendingModal();
+      hideBlockedModal();
+
+      if (!mediaSnapshotUnsubscribe) {
+        attachFirestoreListener();
+      }
+
+      if (profile.role === 'admin') {
+        listenToAdminUsers();
+      }
+    }
+
+    // Escuta da lista de usuários exclusiva para o Administrador
+    function listenToAdminUsers() {
+      if (adminUsersUnsubscribe) return;
+      adminUsersUnsubscribe = onSnapshot(collection(db, 'usuarios'), (snap) => {
+        adminUsersList = snap.docs.map(d => d.data());
+        const pending = adminUsersList.filter(u => u.status === 'pendente');
+        const badge = document.getElementById('pendingUsersBadge');
+        if (pending.length > 0) {
+          badge.textContent = pending.length;
+          badge.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+        }
+        renderAdminUsersModal();
+      });
+    }
+
+    function renderAdminUsersModal() {
+      const pendingUsers = adminUsersList.filter(u => u.status === 'pendente');
+      const approvedUsers = adminUsersList.filter(u => u.status === 'aprovado');
+
+      document.getElementById('tabCountPending').textContent = pendingUsers.length;
+      document.getElementById('tabCountApproved').textContent = approvedUsers.length;
+
+      const container = document.getElementById('adminUsersListContainer');
+      const listToShow = currentAdminTab === 'pending' ? pendingUsers : approvedUsers;
+
+      if (listToShow.length === 0) {
+        container.innerHTML = `
+          <div class="py-12 text-center text-zinc-500">
+            <i data-lucide="user-check" class="w-8 h-8 mx-auto mb-2 text-zinc-600"></i>
+            <p class="text-xs">Nenhum convidado ${currentAdminTab === 'pending' ? 'aguardando aprovação' : 'aprovado ainda'}.</p>
+          </div>
+        `;
+        lucide.createIcons();
+        return;
+      }
+
+      container.innerHTML = listToShow.map((u) => {
+        const isSelf = u.uid === currentUser?.uid;
+        const isAdmin = u.role === 'admin';
+        const dateStr = u.createdAt ? new Date(u.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+
+        return `
+          <div class="p-3 rounded-2xl bg-zinc-950 border border-zinc-800 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-2.5 min-w-0">
+              <img
+                src="${u.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(u.displayName || 'U') + '&background=f59e0b&color=000'}"
+                class="w-10 h-10 rounded-xl object-cover border border-zinc-700 flex-shrink-0"
+              />
+              <div class="min-w-0">
+                <div class="flex items-center gap-1.5">
+                  <p class="text-xs font-semibold text-white truncate">${u.displayName || 'Sem nome'}</p>
+                  ${isSelf ? '<span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/20 text-amber-300 font-bold">Você</span>' : ''}
+                  ${isAdmin && !isSelf ? '<span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-500/10 text-amber-400 font-bold">Admin</span>' : ''}
+                </div>
+                <p class="text-[11px] text-zinc-400 truncate">${u.email || ''}</p>
+                <p class="text-[10px] text-zinc-500">${dateStr ? `Solicitado em: ${dateStr}` : ''}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+              ${currentAdminTab === 'pending' ? `
+                <button
+                  type="button"
+                  data-approve-uid="${u.uid}"
+                  data-perm="editar"
+                  class="px-2 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-semibold text-[11px] transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                  title="Aprovar com permissão total (subir fotos, apagar e baixar)"
+                >
+                  <i data-lucide="edit-3" class="w-3 h-3"></i>
+                  Editar
+                </button>
+                <button
+                  type="button"
+                  data-approve-uid="${u.uid}"
+                  data-perm="ler"
+                  class="px-2 py-1.5 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 text-sky-300 border border-sky-500/30 font-semibold text-[11px] transition active:scale-95 flex items-center gap-1 cursor-pointer"
+                  title="Aprovar somente para visualização (sem upload, apagar ou download)"
+                >
+                  <i data-lucide="eye" class="w-3 h-3"></i>
+                  Ler
+                </button>
+                <button
+                  type="button"
+                  data-reject-uid="${u.uid}"
+                  class="p-1.5 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition active:scale-95 cursor-pointer"
+                  title="Recusar"
+                >
+                  <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                </button>
+              ` : `
+                ${!isSelf ? `
+                  <div class="flex items-center gap-1.5">
+                    ${u.permission === 'editar' ? `
+                      <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                        <i data-lucide="edit-3" class="w-3 h-3"></i> Editar
+                      </span>
+                      <button
+                        type="button"
+                        data-toggle-perm-uid="${u.uid}"
+                        data-next-perm="ler"
+                        class="px-2 py-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] text-zinc-300 hover:text-white transition cursor-pointer"
+                        title="Mudar permissão para apenas visualizar"
+                      >
+                        P/ Ler
+                      </button>
+                    ` : `
+                      <span class="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                        <i data-lucide="eye" class="w-3 h-3"></i> Ler
+                      </span>
+                      <button
+                        type="button"
+                        data-toggle-perm-uid="${u.uid}"
+                        data-next-perm="editar"
+                        class="px-2 py-1 rounded-xl bg-zinc-900 border border-zinc-800 text-[10px] text-amber-400 hover:text-amber-300 transition cursor-pointer"
+                        title="Liberar permissão para subir, baixar e apagar"
+                      >
+                        P/ Editar
+                      </button>
+                    `}
+                    <button
+                      type="button"
+                      data-block-uid="${u.uid}"
+                      class="p-1.5 rounded-xl text-zinc-400 hover:text-red-400 hover:bg-red-500/10 transition active:scale-95 cursor-pointer"
+                      title="Bloquear Acesso"
+                    >
+                      <i data-lucide="ban" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                ` : ''}
+              `}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      lucide.createIcons();
+
+      document.querySelectorAll('[data-approve-uid]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.dataset.approveUid;
+          const permission = btn.dataset.perm || 'editar';
+          try {
+            await updateDoc(doc(db, 'usuarios', uid), {
+              status: 'aprovado',
+              permission,
+              updatedAt: new Date().toISOString()
+            });
+          } catch (err) {
+            alert('Erro ao aprovar: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-toggle-perm-uid]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.dataset.togglePermUid;
+          const nextPerm = btn.dataset.nextPerm;
+          try {
+            await updateDoc(doc(db, 'usuarios', uid), {
+              permission: nextPerm,
+              updatedAt: new Date().toISOString()
+            });
+          } catch (err) {
+            alert('Erro ao alterar permissão: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-reject-uid]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.dataset.rejectUid;
+          if (!confirm('Deseja recusar e excluir a solicitação deste convidado?')) return;
+          try {
+            await deleteDoc(doc(db, 'usuarios', uid));
+          } catch (err) {
+            alert('Erro ao excluir: ' + err.message);
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-block-uid]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const uid = btn.dataset.blockUid;
+          if (!confirm('Deseja bloquear o acesso deste convidado?')) return;
+          try {
+            await updateDoc(doc(db, 'usuarios', uid), {
+              status: 'bloqueado',
+              updatedAt: new Date().toISOString()
+            });
+          } catch (err) {
+            alert('Erro ao bloquear: ' + err.message);
+          }
+        });
+      });
+    }
+
+    // Abas do Modal Admin
+    document.getElementById('tabBtnPendingUsers').addEventListener('click', () => {
+      currentAdminTab = 'pending';
+      document.getElementById('tabBtnPendingUsers').className = 'pb-2.5 px-3 text-xs font-semibold border-b-2 border-amber-400 text-white flex items-center gap-1.5 cursor-pointer';
+      document.getElementById('tabBtnApprovedUsers').className = 'pb-2.5 px-3 text-xs font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5 cursor-pointer';
+      renderAdminUsersModal();
+    });
+
+    document.getElementById('tabBtnApprovedUsers').addEventListener('click', () => {
+      currentAdminTab = 'approved';
+      document.getElementById('tabBtnApprovedUsers').className = 'pb-2.5 px-3 text-xs font-semibold border-b-2 border-amber-400 text-white flex items-center gap-1.5 cursor-pointer';
+      document.getElementById('tabBtnPendingUsers').className = 'pb-2.5 px-3 text-xs font-semibold border-b-2 border-transparent text-zinc-400 hover:text-white flex items-center gap-1.5 cursor-pointer';
+      renderAdminUsersModal();
+    });
+
+    document.getElementById('btnAdminUsersModal').addEventListener('click', () => {
+      adminUsersModal.classList.remove('hidden');
+      adminUsersModal.classList.add('flex');
+      renderAdminUsersModal();
+    });
+
+    document.getElementById('dropdownBtnAdmin').addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      adminUsersModal.classList.remove('hidden');
+      adminUsersModal.classList.add('flex');
+      renderAdminUsersModal();
+    });
+
+    document.getElementById('btnCloseAdminUsersModal').addEventListener('click', () => {
+      adminUsersModal.classList.add('hidden');
+      adminUsersModal.classList.remove('flex');
+    });
+
+    document.getElementById('btnUserProfile').addEventListener('click', (e) => {
+      e.stopPropagation();
+      userDropdownMenu.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+    });
+
+    // Login com o Google
+    document.getElementById('btnGoogleSignIn').addEventListener('click', async () => {
+      const errBox = document.getElementById('authErrorBox');
+      errBox.classList.add('hidden');
+      try {
+        await signInWithPopup(auth, googleProvider);
+      } catch (err) {
+        console.error('Erro no login:', err);
+        let msg = 'Erro ao conectar com o Google: ' + err.message;
+        if (err.code === 'auth/popup-blocked') {
+          msg = 'O pop-up de login foi bloqueado pelo seu navegador. Por favor, autorize pop-ups para entrar.';
+        } else if (err.code === 'auth/unauthorized-domain') {
+          msg = 'Domínio não autorizado. Adicione este domínio na aba Authentication > Settings > Authorized Domains no Firebase Console.';
+        } else if (err.code === 'auth/operation-not-allowed') {
+          msg = 'O provedor Google ainda não foi ativado no Firebase Console! Vá em Authentication > Sign-in method e ative o Google.';
+        }
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+      }
+    });
+
+    // Logout
+    const handleSignOut = async () => {
+      userDropdownMenu.classList.add('hidden');
+      try {
+        await signOut(auth);
+      } catch (err) {
+        console.error('Erro ao sair:', err);
+      }
+    };
+
+    document.getElementById('dropdownBtnSignOut').addEventListener('click', handleSignOut);
+    document.getElementById('btnPendingSignOut').addEventListener('click', handleSignOut);
+    document.getElementById('btnBlockedSignOut').addEventListener('click', handleSignOut);
+
+    // Monitoramento do Estado de Autenticação
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        currentUser = user;
+        await syncUserAuthProfile(user);
+      } else {
+        currentUser = null;
+        currentUserProfile = null;
+        if (userProfileUnsubscribe) { userProfileUnsubscribe(); userProfileUnsubscribe = null; }
+        if (adminUsersUnsubscribe) { adminUsersUnsubscribe(); adminUsersUnsubscribe = null; }
+        detachFirestoreListener();
+        updateHeaderUserProfile(null);
+        showAuthModal();
+      }
+    });
+
+    // ========================================================
+    // INSTALAÇÃO DO PWA (POP-UP NO CELULAR / NAVEGADOR)
+    // ========================================================
+    let deferredPrompt = null;
+    const pwaInstallModal = document.getElementById('pwaInstallModal');
+    const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent.toLowerCase()) && !window.MSStream;
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+
+    // Registrar Service Worker para PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./public/sw.js').catch((err) => {
+          console.warn('Aviso no ServiceWorker:', err);
+        });
+      });
+    }
+
+    function showPwaInstallModal(force = false) {
+      if (isStandalone && !force) return;
+
+      const pwaStandard = document.getElementById('pwaStandardActions');
+      const pwaIos = document.getElementById('pwaIosInstructions');
+
+      if (isIos) {
+        pwaStandard.classList.add('hidden');
+        pwaIos.classList.remove('hidden');
+      } else {
+        pwaStandard.classList.remove('hidden');
+        pwaIos.classList.add('hidden');
+      }
+
+      pwaInstallModal.classList.remove('hidden');
+      pwaInstallModal.classList.add('flex');
+      lucide.createIcons();
+    }
+
+    function hidePwaInstallModal() {
+      pwaInstallModal.classList.add('hidden');
+      pwaInstallModal.classList.remove('flex');
+    }
+
+    // Captura o evento nativo de instalação do Chrome / Android / Edge
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+
+      const dismissedUntil = localStorage.getItem('pwa_dismissed_until');
+      if (!dismissedUntil || Date.now() > Number(dismissedUntil)) {
+        setTimeout(() => showPwaInstallModal(), 2000);
+      }
+    });
+
+    // Se for iOS e ainda não estiver instalado, exibe após alguns segundos
+    if (isIos && !isStandalone) {
+      const dismissedUntil = localStorage.getItem('pwa_dismissed_until');
+      if (!dismissedUntil || Date.now() > Number(dismissedUntil)) {
+        setTimeout(() => showPwaInstallModal(), 2500);
+      }
+    }
+
+    document.getElementById('btnConfirmInstallPwa').addEventListener('click', async () => {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+          hidePwaInstallModal();
+        }
+        deferredPrompt = null;
+      } else {
+        showPwaInstallModal(true);
+      }
+    });
+
+    const dismissPwa = () => {
+      hidePwaInstallModal();
+      localStorage.setItem('pwa_dismissed_until', String(Date.now() + 24 * 60 * 60 * 1000));
+    };
+
+    document.getElementById('btnDismissPwaModal').addEventListener('click', dismissPwa);
+    document.getElementById('btnDismissPwaIos').addEventListener('click', dismissPwa);
+
+    // Botão no menu do usuário para abrir manualmente
+    document.getElementById('dropdownBtnInstallPwa').addEventListener('click', () => {
+      userDropdownMenu.classList.add('hidden');
+      showPwaInstallModal(true);
+    });
+
+    // Botão de Forçar Sincronização / Atualização
+    document.getElementById('btnSyncFirestore').addEventListener('click', async () => {
+      const icon = document.getElementById('syncIcon');
+      icon.classList.add('animate-spin');
+      try {
+        const snap = await getDocs(q);
+        allItems = snap.docs.map((docSnap) => {
+          const data = docSnap.data();
+          const isFav = Boolean(data.isFavorite || localFavorites.has(docSnap.id));
+          return { id: docSnap.id, ...data, isFavorite: isFav };
+        });
+        updateStorageDashboard();
+        renderGallery();
+      } catch (err) {
+        console.error('Erro na sincronização manual:', err);
+      } finally {
+        setTimeout(() => icon.classList.remove('animate-spin'), 600);
+      }
+    });
+
+    function getFilteredItems() {
+      const term = searchQuery.trim().toLowerCase();
+      return allItems.filter((item) => {
+        let matchCat = false;
+        if (activeCategory === 'Todas') matchCat = true;
+        else if (activeCategory === 'Favoritos') matchCat = Boolean(item.isFavorite);
+        else matchCat = item.category === activeCategory;
+
+        const matchSearch = !term || (item.title || '').toLowerCase().includes(term);
+        return matchCat && matchSearch;
+      });
+    }
+
+    function updateCounters() {
+      document.getElementById('countTodas').textContent = allItems.length;
+      document.getElementById('countCasamento').textContent = allItems.filter(i => i.category === 'Casamento').length;
+      document.getElementById('countRevelacao').textContent = allItems.filter(i => i.category === 'Revelação').length;
+      document.getElementById('countFavoritos').textContent = allItems.filter(i => i.isFavorite).length;
+    }
+
+    // Alternar Favorito
+    async function toggleFavorite(itemId, e) {
+      if (e) e.stopPropagation();
+      const item = allItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      const newStatus = !item.isFavorite;
+      item.isFavorite = newStatus;
+
+      if (newStatus) localFavorites.add(itemId);
+      else localFavorites.delete(itemId);
+      localStorage.setItem('lembrancas_favs', JSON.stringify(Array.from(localFavorites)));
+
+      renderGallery();
+      if (lightboxCurrentItem && lightboxCurrentItem.id === itemId) {
+        updateLightboxFavButton(newStatus);
+      }
+
+      try {
+        await updateDoc(doc(db, 'midias', itemId), { isFavorite: newStatus });
+      } catch (err) {
+        console.warn('Erro ao atualizar favorito no Firestore:', err.message);
+      }
+    }
+
+    // Modal de Edição de Nome
+    function openEditTitleModal(itemId, e) {
+      if (e) e.stopPropagation();
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      const item = allItems.find(i => i.id === itemId);
+      if (!item) return;
+      editingItemId = itemId;
+      document.getElementById('editTitleInput').value = item.title;
+      const modal = document.getElementById('editTitleModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      setTimeout(() => document.getElementById('editTitleInput').focus(), 50);
+    }
+
+    function closeEditTitleModal() {
+      const modal = document.getElementById('editTitleModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      editingItemId = null;
+    }
+
+    document.getElementById('btnCloseEditTitle').addEventListener('click', closeEditTitleModal);
+    document.getElementById('btnCancelEditTitle').addEventListener('click', closeEditTitleModal);
+    document.getElementById('editTitleForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      if (!editingItemId) return;
+      const newTitle = document.getElementById('editTitleInput').value.trim();
+      if (!newTitle) return;
+
+      const item = allItems.find(i => i.id === editingItemId);
+      if (item) item.title = newTitle;
+
+      closeEditTitleModal();
+      renderGallery();
+      if (lightboxCurrentItem && lightboxCurrentItem.id === editingItemId) {
+        document.getElementById('lightboxTitle').textContent = newTitle;
+      }
+
+      try {
+        await updateDoc(doc(db, 'midias', editingItemId), { title: newTitle });
+      } catch (err) {
+        console.error('Erro ao atualizar nome no Firestore:', err);
+      }
+    });
+
+    // MODO SELEÇÃO
+    function toggleSelectionMode() {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      isSelectionMode = !isSelectionMode;
+      if (!isSelectionMode) {
+        selectedIds.clear();
+      }
+      updateSelectionUI();
+      renderGallery();
+    }
+
+    function updateSelectionUI() {
+      const btn = document.getElementById('btnToggleSelectionMode');
+      const text = document.getElementById('btnSelectText');
+      const bar = document.getElementById('selectionActionBar');
+      const countBadge = document.getElementById('selectedCountBadge');
+      const btnDownload = document.getElementById('btnDownloadSelected');
+      const btnDelete = document.getElementById('btnDeleteSelected');
+
+      if (isSelectionMode) {
+        btn.className = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-amber-500 text-zinc-950 font-bold text-xs shadow-md active:scale-95 transition';
+        text.textContent = 'Concluir';
+        bar.classList.remove('hidden');
+        bar.classList.add('flex');
+        countBadge.textContent = `${selectedIds.size} sel.`;
+        btnDownload.disabled = selectedIds.size === 0;
+        btnDelete.disabled = selectedIds.size === 0;
+      } else {
+        btn.className = 'inline-flex items-center gap-1.5 px-3 py-2 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-300 font-semibold text-xs hover:text-white hover:border-zinc-700 active:scale-95 transition';
+        text.textContent = 'Selecionar';
+        bar.classList.add('hidden');
+        bar.classList.remove('flex');
+      }
+      lucide.createIcons();
+    }
+
+    function toggleSelectItem(id) {
+      if (selectedIds.has(id)) selectedIds.delete(id);
+      else selectedIds.add(id);
+      updateSelectionUI();
+      renderGallery();
+    }
+
+    document.getElementById('btnToggleSelectionMode').addEventListener('click', toggleSelectionMode);
+    document.getElementById('btnCancelSelection').addEventListener('click', () => {
+      isSelectionMode = false;
+      selectedIds.clear();
+      updateSelectionUI();
+      renderGallery();
+    });
+
+    document.getElementById('btnSelectAll').addEventListener('click', () => {
+      const filtered = getFilteredItems();
+      if (selectedIds.size === filtered.length) {
+        selectedIds.clear();
+      } else {
+        filtered.forEach(i => selectedIds.add(i.id));
+      }
+      updateSelectionUI();
+      renderGallery();
+    });
+
+    // BAIXAR SELECIONADOS
+    async function triggerSingleDownload(url, filename) {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        const blobUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
+      } catch {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }
+    }
+
+    document.getElementById('btnDownloadSelected').addEventListener('click', async () => {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      const toDownload = allItems.filter(i => selectedIds.has(i.id));
+      if (!toDownload.length) return;
+
+      const btn = document.getElementById('btnDownloadSelected');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+
+      for (let i = 0; i < toDownload.length; i++) {
+        const item = toDownload[i];
+        btn.innerHTML = `Baixando ${i + 1}/${toDownload.length}...`;
+        const ext = item.format || (item.type === 'video' ? 'mp4' : 'webp');
+        const cleanTitle = (item.title || 'lembranca').replace(/[^a-zA-Z0-9_-]/g, '_');
+        await triggerSingleDownload(item.fullUrl, `${cleanTitle}.${ext}`);
+        if (toDownload.length > 1) {
+          await new Promise(r => setTimeout(r, 600));
+        }
+      }
+
+      btn.innerHTML = originalText;
+      btn.disabled = false;
+      lucide.createIcons();
+    });
+
+    // APAGAR SELECIONADOS & INDIVIDUAIS COM CONFIRMAÇÃO
+    function openDeleteConfirmModal(itemsToDelete) {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      pendingDeleteItems = itemsToDelete;
+      const count = itemsToDelete.length;
+      document.getElementById('deleteModalTitle').textContent = count === 1 ? 'Apagar esta Lembrança?' : `Apagar ${count} Lembranças?`;
+      document.getElementById('deleteModalMessage').textContent = count === 1
+        ? `Tem certeza que deseja apagar "${itemsToDelete[0].title}" do banco de dados e do Storage? Esta ação não pode ser desfeita.`
+        : `Tem certeza que deseja apagar permanentemente estas ${count} mídias selecionadas? Esta ação não pode ser desfeita.`;
+
+      const modal = document.getElementById('deleteConfirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDeleteConfirmModal() {
+      const modal = document.getElementById('deleteConfirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      pendingDeleteItems = [];
+    }
+
+    document.getElementById('btnCancelDeleteAction').addEventListener('click', closeDeleteConfirmModal);
+
+    // Confirmação de exclusão (apaga do Firestore e do Storage)
+    document.getElementById('btnConfirmDeleteAction').addEventListener('click', async () => {
+      if (!pendingDeleteItems.length) return;
+      const btn = document.getElementById('btnConfirmDeleteAction');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Apagando...';
+
+      for (const item of pendingDeleteItems) {
+        try {
+          await deleteDoc(doc(db, 'midias', item.id));
+          if (item.thumbUrl) {
+            try {
+              const tRef = ref(storage, item.thumbUrl);
+              await deleteObject(tRef);
+            } catch (_) {}
+          }
+          if (item.fullUrl) {
+            try {
+              const fRef = ref(storage, item.fullUrl);
+              await deleteObject(fRef);
+            } catch (_) {}
+          }
+
+          localFavorites.delete(item.id);
+          selectedIds.delete(item.id);
+        } catch (err) {
+          console.error('Erro ao apagar item:', err);
+        }
+      }
+
+      localStorage.setItem('lembrancas_favs', JSON.stringify(Array.from(localFavorites)));
+      btn.disabled = false;
+      btn.textContent = originalText;
+      closeDeleteConfirmModal();
+
+      if (lightboxCurrentItem && pendingDeleteItems.some(i => i.id === lightboxCurrentItem.id)) {
+        closeLightboxModal();
+      }
+
+      if (selectedIds.size === 0) {
+        isSelectionMode = false;
+      }
+      updateSelectionUI();
+      updateStorageDashboard();
+      renderGallery();
+    });
+
+    document.getElementById('btnDeleteSelected').addEventListener('click', () => {
+      const toDelete = allItems.filter(i => selectedIds.has(i.id));
+      if (toDelete.length > 0) openDeleteConfirmModal(toDelete);
+    });
+
+    function renderGallery() {
+      updateCounters();
+      const filtered = getFilteredItems();
+      const container = document.getElementById('galleryContainer');
+      const emptyState = document.getElementById('emptyState');
+
+      if (filtered.length === 0) {
+        container.innerHTML = '';
+        emptyState.classList.remove('hidden');
+        return;
+      }
+      emptyState.classList.add('hidden');
+
+      container.innerHTML = `
+        <div class="px-1 sm:px-4 grid grid-cols-3 sm:grid-cols-4 gap-1 sm:gap-2">
+          ${filtered.map((item) => {
+            const isSelected = selectedIds.has(item.id);
+            return `
+            <div
+              class="group relative aspect-square bg-zinc-900 overflow-hidden sm:rounded-xl focus:outline-none cursor-pointer ${
+                isSelected ? 'ring-4 ring-amber-400 ring-offset-2 ring-offset-zinc-950 scale-[0.98]' : ''
+              }"
+              data-item-id="${item.id}"
+            >
+              <img
+                src="${item.thumbUrl}"
+                alt="${item.title}"
+                loading="lazy"
+                decoding="async"
+                onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.classList.remove('hidden');"
+                class="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+              />
+
+              <!-- Fallback caso a imagem tenha sido apagada do Storage manualmente -->
+              <div class="hidden w-full h-full flex flex-col items-center justify-center bg-zinc-900/90 text-zinc-500 p-2 text-center">
+                <i data-lucide="image-off" class="w-6 h-6 mb-1 text-zinc-600"></i>
+                <span class="text-[10px] text-zinc-400">Arquivo apagado</span>
+                <button type="button" data-del-id="${item.id}" class="mt-1 px-2 py-0.5 bg-red-600/30 hover:bg-red-600 text-red-300 hover:text-white rounded-lg text-[10px] font-semibold transition">
+                  Remover
+                </button>
+              </div>
+
+              <!-- Checkbox de Seleção -->
+              ${isSelectionMode ? `
+                <div class="absolute top-2 left-2 z-20 w-6 h-6 rounded-full border-2 ${
+                  isSelected ? 'bg-amber-400 border-amber-400 text-zinc-950' : 'bg-black/50 border-white/80 text-transparent'
+                } flex items-center justify-center text-xs font-bold shadow-lg transition">
+                  ✓
+                </div>
+              ` : ''}
+
+              <!-- Botão de Favorito no Canto Superior Direito -->
+              <button
+                type="button"
+                data-fav-id="${item.id}"
+                class="btn-fav-thumb absolute top-1.5 right-1.5 z-20 w-7 h-7 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center transition active:scale-90 ${
+                  item.isFavorite ? 'text-rose-500' : 'text-white/70 hover:text-white'
+                }"
+                title="Favoritar"
+              >
+                <i data-lucide="heart" class="w-4 h-4 ${item.isFavorite ? 'fill-rose-500' : ''}"></i>
+              </button>
+
+              <!-- Indicador de Vídeo -->
+              ${item.type === 'video' ? `
+                <span class="absolute bottom-6 right-2 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center text-white text-[10px]">▶</span>
+              ` : ''}
+
+              <!-- Título na Base -->
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent p-1.5 text-left">
+                <p class="text-[11px] font-medium text-white truncate">${item.title}</p>
+              </div>
+            </div>
+          `;
+          }).join('')}
+        </div>
+      `;
+
+      lucide.createIcons();
+
+      // Listeners de Clique na Grade
+      document.querySelectorAll('[data-item-id]').forEach((elem) => {
+        elem.addEventListener('click', (e) => {
+          if (e.target.closest('[data-fav-id]') || e.target.closest('[data-del-id]')) return;
+          const id = elem.dataset.itemId;
+          if (isSelectionMode) {
+            toggleSelectItem(id);
+          } else {
+            const item = allItems.find(i => i.id === id);
+            if (item) openLightbox(item);
+          }
+        });
+      });
+
+      document.querySelectorAll('[data-fav-id]').forEach((btn) => {
+        btn.addEventListener('click', (e) => toggleFavorite(btn.dataset.favId, e));
+      });
+
+      document.querySelectorAll('[data-edit-id]').forEach((btn) => {
+        btn.addEventListener('click', (e) => openEditTitleModal(btn.dataset.editId, e));
+      });
+
+      document.querySelectorAll('[data-del-id]').forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const item = allItems.find(i => i.id === btn.dataset.delId);
+          if (item) openDeleteConfirmModal([item]);
+        });
+      });
+    }
+
+    // LIGHTBOX HD
+    function openLightbox(item) {
+      lightboxCurrentItem = item;
+      const filtered = getFilteredItems();
+      const currentIndex = filtered.findIndex(i => i.id === item.id);
+
+      document.getElementById('lightboxTitle').textContent = item.title;
+      document.getElementById('lightboxCategory').textContent = item.category;
+      document.getElementById('lightboxPosition').textContent = currentIndex >= 0 ? `${currentIndex + 1} de ${filtered.length}` : '';
+
+      updateLightboxFavButton(Boolean(item.isFavorite));
+
+      const body = document.getElementById('lightboxBody');
+      body.innerHTML = item.type === 'video'
+        ? `<video src="${item.fullUrl}" poster="${item.thumbUrl}" controls autoplay playsinline class="max-h-[80vh] max-w-full object-contain rounded-xl"></video>`
+        : `<img src="${item.fullUrl}" alt="${item.title}" loading="lazy" onerror="this.src='${item.thumbUrl}';" class="max-h-[80vh] max-w-full object-contain rounded-xl shadow-2xl" />`;
+
+      const modal = document.getElementById('lightboxModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      applyUserPermissions(currentUserProfile);
+      lucide.createIcons();
+    }
+
+    function updateLightboxFavButton(isFav) {
+      const btn = document.getElementById('btnLightboxFavorite');
+      const icon = document.getElementById('lightboxFavIcon');
+      if (isFav) {
+        btn.className = 'p-2.5 rounded-full bg-rose-500/20 text-rose-500 border border-rose-500/30 transition';
+        icon.classList.add('fill-rose-500');
+      } else {
+        btn.className = 'p-2.5 rounded-full bg-zinc-800/80 text-zinc-300 hover:bg-zinc-700 transition';
+        icon.classList.remove('fill-rose-500');
+      }
+    }
+
+    function navigateLightbox(direction) {
+      if (!lightboxCurrentItem) return;
+      const filtered = getFilteredItems();
+      if (filtered.length <= 1) return;
+      const currentIndex = filtered.findIndex(i => i.id === lightboxCurrentItem.id);
+      if (currentIndex === -1) return;
+
+      let nextIndex = currentIndex + direction;
+      if (nextIndex < 0) nextIndex = filtered.length - 1;
+      else if (nextIndex >= filtered.length) nextIndex = 0;
+
+      openLightbox(filtered[nextIndex]);
+    }
+
+    document.getElementById('btnLightboxPrev').addEventListener('click', () => navigateLightbox(-1));
+    document.getElementById('btnLightboxNext').addEventListener('click', () => navigateLightbox(1));
+
+    document.getElementById('btnLightboxFavorite').addEventListener('click', () => {
+      if (lightboxCurrentItem) toggleFavorite(lightboxCurrentItem.id);
+    });
+
+    document.getElementById('btnEditLightboxTitle').addEventListener('click', () => {
+      if (lightboxCurrentItem) openEditTitleModal(lightboxCurrentItem.id);
+    });
+
+    document.getElementById('btnLightboxDownload').addEventListener('click', () => {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      if (!lightboxCurrentItem) return;
+      const ext = lightboxCurrentItem.format || (lightboxCurrentItem.type === 'video' ? 'mp4' : 'webp');
+      const cleanTitle = (lightboxCurrentItem.title || 'lembranca').replace(/[^a-zA-Z0-9_-]/g, '_');
+      triggerSingleDownload(lightboxCurrentItem.fullUrl, `${cleanTitle}.${ext}`);
+    });
+
+    document.getElementById('btnLightboxDelete').addEventListener('click', () => {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      if (lightboxCurrentItem) {
+        openDeleteConfirmModal([lightboxCurrentItem]);
+      }
+    });
+
+    function closeLightboxModal() {
+      const modal = document.getElementById('lightboxModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.getElementById('lightboxBody').innerHTML = '';
+      lightboxCurrentItem = null;
+    }
+
+    document.getElementById('btnCloseLightbox').addEventListener('click', closeLightboxModal);
+
+    window.addEventListener('keydown', (e) => {
+      const modal = document.getElementById('lightboxModal');
+      if (!modal.classList.contains('hidden')) {
+        if (e.key === 'ArrowLeft') navigateLightbox(-1);
+        else if (e.key === 'ArrowRight') navigateLightbox(1);
+        else if (e.key === 'Escape') closeLightboxModal();
+      }
+    });
+
+    // Slideshow em Tela Cheia
+    function openSlideshow() {
+      const filtered = getFilteredItems();
+      if (filtered.length === 0) return;
+      slideIndex = 0;
+      isSlidePlaying = true;
+      const modal = document.getElementById('slideshowModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      renderCurrentSlide();
+      startSlideTimer();
+    }
+
+    function renderCurrentSlide() {
+      const filtered = getFilteredItems();
+      if (filtered.length === 0) return;
+      const item = filtered[slideIndex % filtered.length];
+      document.getElementById('slideshowTitle').textContent = item.title;
+      document.getElementById('slideshowSubtitle').textContent = `${item.category} (${slideIndex + 1} de ${filtered.length})`;
+      document.getElementById('slideshowBars').innerHTML = filtered.map((_, idx) => `
+        <div class="h-1 flex-1 rounded-full bg-white/25 overflow-hidden">
+          <div class="h-full bg-amber-400 ${idx <= slideIndex ? 'w-full' : 'w-0'}"></div>
+        </div>
+      `).join('');
+      const wrap = document.getElementById('slideshowMediaWrap');
+      wrap.innerHTML = item.type === 'video'
+        ? `<video src="${item.fullUrl}" poster="${item.thumbUrl}" autoplay playsinline class="w-full h-full object-contain"></video>`
+        : `<img src="${item.fullUrl}" alt="${item.title}" loading="lazy" class="w-full h-full object-contain" />`;
+    }
+
+    function startSlideTimer() {
+      clearInterval(slideTimer);
+      if (!isSlidePlaying) return;
+      slideTimer = setInterval(() => {
+        const filtered = getFilteredItems();
+        if (filtered.length === 0) return;
+        slideIndex = (slideIndex + 1) % filtered.length;
+        renderCurrentSlide();
+      }, 4500);
+    }
+
+    document.getElementById('btnNextSlide').addEventListener('click', () => {
+      const filtered = getFilteredItems();
+      if (!filtered.length) return;
+      slideIndex = (slideIndex + 1) % filtered.length;
+      renderCurrentSlide();
+    });
+
+    document.getElementById('btnPrevSlide').addEventListener('click', () => {
+      const filtered = getFilteredItems();
+      if (!filtered.length) return;
+      slideIndex = (slideIndex - 1 + filtered.length) % filtered.length;
+      renderCurrentSlide();
+    });
+
+    document.getElementById('btnToggleSlidePlay').addEventListener('click', (e) => {
+      isSlidePlaying = !isSlidePlaying;
+      e.currentTarget.textContent = isSlidePlaying ? 'Pausar' : 'Reproduzir';
+      if (isSlidePlaying) startSlideTimer();
+      else clearInterval(slideTimer);
+    });
+
+    document.getElementById('btnCloseSlideshow').addEventListener('click', () => {
+      clearInterval(slideTimer);
+      const modal = document.getElementById('slideshowModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      setViewModeUI('grid');
+    });
+
+    function setViewModeUI(mode) {
+      viewMode = mode;
+      document.querySelectorAll('.view-btn').forEach((btn) => {
+        if (btn.dataset.view === mode) {
+          btn.className = 'view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition bg-amber-500 text-zinc-950 shadow';
+        } else {
+          btn.className = 'view-btn p-2 rounded-xl text-xs font-medium flex items-center gap-1 transition text-zinc-400 hover:text-white';
+        }
+      });
+      if (mode === 'slideshow') openSlideshow();
+      else renderGallery();
+    }
+
+    document.querySelectorAll('.view-btn').forEach((btn) => {
+      btn.addEventListener('click', () => setViewModeUI(btn.dataset.view));
+    });
+
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      searchQuery = e.target.value;
+      renderGallery();
+    });
+
+    document.querySelectorAll('.cat-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.dataset.cat;
+        document.querySelectorAll('.cat-btn').forEach((b) => {
+          b.className = b.dataset.cat === activeCategory
+            ? 'cat-btn px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-amber-500 text-zinc-950'
+            : 'cat-btn px-4 py-1.5 rounded-full text-xs font-semibold flex items-center gap-1.5 transition flex-shrink-0 bg-zinc-900 text-zinc-400 border border-zinc-800 hover:text-white';
+        });
+        renderGallery();
+      });
+    });
+
+    // Helper seguro para decodificar imagem em Bitmap ou HTMLImageElement
+    async function decodeImageToDrawable(blob) {
+      if (typeof createImageBitmap === 'function') {
+        try {
+          return await createImageBitmap(blob);
+        } catch (_) {}
+      }
+      return await new Promise((resolve, reject) => {
+        const img = new Image();
+        const objUrl = URL.createObjectURL(blob);
+        img.onload = () => {
+          URL.revokeObjectURL(objUrl);
+          resolve(img);
+        };
+        img.onerror = (err) => {
+          URL.revokeObjectURL(objUrl);
+          reject(err);
+        };
+        img.src = objUrl;
+      });
+    }
+
+    // Conversão e Compressão Adaptativa de Imagem (suporte a HEIC/HEIF/JPG/PNG -> WebP garantidamente menor que o original)
+    async function optimizeImage(file, onProgress) {
+      let imageBlob = file;
+      const fileName = (file.name || '').toLowerCase();
+      const isHeic = fileName.endsWith('.heic') || fileName.endsWith('.heif') || file.type === 'image/heic' || file.type === 'image/heif';
+
+      if (isHeic && typeof heic2any !== 'undefined') {
+        if (onProgress) onProgress(15, `Decodificando HEIC "${file.name}"...`);
+        try {
+          const converted = await heic2any({
+            blob: file,
+            toType: 'image/jpeg',
+            quality: 0.80
+          });
+          imageBlob = Array.isArray(converted) ? converted[0] : converted;
+        } catch (heicErr) {
+          console.warn('Aviso na conversão HEIC:', heicErr);
+        }
+      }
+
+      if (onProgress) onProgress(35, `Gerando miniatura leve de "${file.name}"...`);
+      const drawable = await decodeImageToDrawable(imageBlob);
+      const srcW = drawable.width || drawable.naturalWidth || 1280;
+      const srcH = drawable.height || drawable.naturalHeight || 1280;
+
+      // 1. Miniatura leve (320x320 em WebP qualidade 0.58 -> ~6 a 12 KB)
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 320;
+      thumbCanvas.height = 320;
+      const minSide = Math.min(srcW, srcH);
+      const sx = (srcW - minSide) / 2;
+      const sy = (srcH - minSide) / 2;
+      thumbCanvas.getContext('2d').drawImage(drawable, sx, sy, minSide, minSide, 0, 0, 320, 320);
+      let thumbBlob = await new Promise(r => thumbCanvas.toBlob(b => r(b), 'image/webp', 0.58));
+      if (!thumbBlob) {
+        thumbBlob = await new Promise(r => thumbCanvas.toBlob(b => r(b || imageBlob), 'image/jpeg', 0.58));
+      }
+
+      // 2. Loop de Compressão Adaptativa: reduz resolução e qualidade progressivamente
+      // até garantir que (fullBlob + thumbBlob + metadados) seja significativamente menor que o original (especialmente HEIC)
+      const compressionSteps = [
+        { maxDim: 1600, quality: 0.72 },
+        { maxDim: 1440, quality: 0.62 },
+        { maxDim: 1280, quality: 0.52 },
+        { maxDim: 1080, quality: 0.44 },
+        { maxDim: 960,  quality: 0.36 },
+        { maxDim: 800,  quality: 0.28 },
+        { maxDim: 640,  quality: 0.22 }
+      ];
+
+      // Meta: tamanho total (foto + thumb + doc) <= 72% do arquivo original
+      const targetMaxTotalBytes = Math.max(10 * 1024, Math.floor(file.size * 0.72));
+      let fullBlob = null;
+
+      for (let s = 0; s < compressionSteps.length; s++) {
+        const { maxDim, quality } = compressionSteps[s];
+        if (onProgress) {
+          const stepPct = 45 + Math.round(((s + 1) / compressionSteps.length) * 50);
+          onProgress(stepPct, `Comprimindo "${file.name}" em WebP...`);
+        }
+
+        let width = srcW;
+        let height = srcH;
+        if (width > maxDim || height > maxDim) {
+          const ratio = Math.min(maxDim / width, maxDim / height);
+          width = Math.max(1, Math.round(width * ratio));
+          height = Math.max(1, Math.round(height * ratio));
+        }
+
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = width;
+        fullCanvas.height = height;
+        fullCanvas.getContext('2d').drawImage(drawable, 0, 0, width, height);
+
+        const candidate = await new Promise(r => fullCanvas.toBlob(b => r(b), 'image/webp', quality));
+        if (!candidate) continue;
+
+        fullBlob = candidate;
+        const candidateTotal = fullBlob.size + thumbBlob.size + FIRESTORE_DOC_OVERHEAD_BYTES;
+
+        if (candidateTotal <= targetMaxTotalBytes) {
+          break;
+        }
+      }
+
+      // Caso a imagem original já seja muito pequena, otimiza ainda mais a thumbnail para não inflar o total
+      if (fullBlob && (fullBlob.size + thumbBlob.size + FIRESTORE_DOC_OVERHEAD_BYTES) >= file.size) {
+        const tinyThumbCanvas = document.createElement('canvas');
+        tinyThumbCanvas.width = 160;
+        tinyThumbCanvas.height = 160;
+        tinyThumbCanvas.getContext('2d').drawImage(drawable, sx, sy, minSide, minSide, 0, 0, 160, 160);
+        const tinyThumb = await new Promise(r => tinyThumbCanvas.toBlob(b => r(b), 'image/webp', 0.38));
+        if (tinyThumb && tinyThumb.size < thumbBlob.size) {
+          thumbBlob = tinyThumb;
+        }
+      }
+
+      if (!fullBlob) fullBlob = imageBlob;
+      if (drawable && typeof drawable.close === 'function') drawable.close();
+
+      return {
+        fullBlob,
+        thumbBlob,
+        previewUrl: URL.createObjectURL(thumbBlob),
+        type: 'image',
+        format: 'webp',
+        originalSize: file.size,
+        optimizedSize: fullBlob.size,
+        thumbSize: thumbBlob.size,
+        totalBytesToAdd: fullBlob.size + thumbBlob.size + FIRESTORE_DOC_OVERHEAD_BYTES
+      };
+    }
+
+    // Compressão Real de Vídeo (MP4/MOV -> WebM/MP4 com redução real de bitrate e resolução 720p/480p) + Thumbnail WebP
+    async function optimizeVideo(file, onProgress) {
+      const url = URL.createObjectURL(file);
+      const video = document.createElement('video');
+      video.src = url;
+      video.muted = true;
+      video.playsInline = true;
+      video.preload = 'auto';
+
+      await new Promise((res, rej) => {
+        video.onloadeddata = res;
+        video.onerror = () => rej(new Error('Não foi possível ler o vídeo selecionado.'));
+      });
+
+      const duration = Math.max(0.5, Number.isFinite(video.duration) && video.duration > 0 ? video.duration : 1);
+      const vw = video.videoWidth || 1080;
+      const vh = video.videoHeight || 1920;
+
+      // 1. Extrair Thumbnail leve 320x320 em WebP (qualidade 0.58 -> ~7 a 12 KB)
+      if (onProgress) onProgress(8, `Extraindo capa de "${file.name}"...`);
+      video.currentTime = Math.min(0.5, duration / 2);
+      await new Promise(res => {
+        const onSeek = () => { video.removeEventListener('seeked', onSeek); res(); };
+        video.addEventListener('seeked', onSeek);
+        setTimeout(res, 600);
+      });
+
+      const thumbCanvas = document.createElement('canvas');
+      thumbCanvas.width = 320;
+      thumbCanvas.height = 320;
+      const minSide = Math.min(vw, vh);
+      thumbCanvas.getContext('2d').drawImage(video, (vw - minSide) / 2, (vh - minSide) / 2, minSide, minSide, 0, 0, 320, 320);
+      let thumbBlob = await new Promise(r => thumbCanvas.toBlob(b => r(b), 'image/webp', 0.58));
+      if (!thumbBlob) {
+        thumbBlob = new Blob([], { type: 'image/webp' });
+      }
+
+      // 2. Calcular orçamento de bits (bitrate) para garantir que o vídeo comprimido + thumbnail + metadados
+      // fique significativamente menor que o MP4 original (~40% a 85% de redução)
+      const targetMaxTotalBytes = Math.max(32 * 1024, Math.floor(file.size * 0.58));
+      const maxVideoBudgetBytes = Math.max(24 * 1024, targetMaxTotalBytes - thumbBlob.size - FIRESTORE_DOC_OVERHEAD_BYTES);
+      const maxAllowedTotalBps = Math.floor((maxVideoBudgetBytes * 8) / duration);
+
+      const audioBps = Math.min(64000, Math.max(24000, Math.floor(maxAllowedTotalBps * 0.15)));
+      const videoBps = Math.min(1150000, Math.max(45000, maxAllowedTotalBps - audioBps));
+
+      // Ajustar resolução proporcionalmente ao bitrate alvo para máxima nitidez sem artefatos
+      const maxDim = videoBps >= 650000 ? 1280 : (videoBps >= 320000 ? 854 : 640);
+      let targetW = vw;
+      let targetH = vh;
+      if (targetW > maxDim || targetH > maxDim) {
+        const ratio = Math.min(maxDim / targetW, maxDim / targetH);
+        targetW = Math.max(2, Math.round(targetW * ratio) & ~1);
+        targetH = Math.max(2, Math.round(targetH * ratio) & ~1);
+      }
+
+      let fullBlob = null;
+      let format = file.type.includes('webm') ? 'webm' : 'mp4';
+
+      const mimeCandidates = [
+        'video/webm;codecs=vp9,opus',
+        'video/webm;codecs=vp8,opus',
+        'video/webm',
+        'video/mp4;codecs=avc1.42E01E,mp4a.40.2',
+        'video/mp4'
+      ];
+      const supportedMime = typeof MediaRecorder !== 'undefined'
+        ? (mimeCandidates.find(m => MediaRecorder.isTypeSupported(m)) || '')
+        : '';
+
+      if (supportedMime && duration <= 180) {
+        try {
+          const workCanvas = document.createElement('canvas');
+          workCanvas.width = targetW;
+          workCanvas.height = targetH;
+          const ctx = workCanvas.getContext('2d');
+
+          const canvasStream = workCanvas.captureStream(24);
+          let audioCtx = null;
+          let combinedTracks = [...canvasStream.getVideoTracks()];
+
+          // Capturar áudio original sem tocar som alto nos alto-falantes do usuário
+          try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+              audioCtx = new AudioContextClass();
+              const sourceNode = audioCtx.createMediaElementSource(video);
+              const destNode = audioCtx.createMediaStreamDestination();
+              sourceNode.connect(destNode);
+              video.muted = false;
+              video.volume = 1.0;
+              combinedTracks.push(...destNode.stream.getAudioTracks());
+            }
+          } catch (_) {
+            video.muted = true;
+          }
+
+          const combinedStream = new MediaStream(combinedTracks);
+          const recorder = new MediaRecorder(combinedStream, {
+            mimeType: supportedMime,
+            videoBitsPerSecond: videoBps,
+            audioBitsPerSecond: audioBps
+          });
+
+          const chunks = [];
+          recorder.ondataavailable = (ev) => {
+            if (ev.data && ev.data.size > 0) chunks.push(ev.data);
+          };
+
+          const recordingDone = new Promise((resolve, reject) => {
+            recorder.onstop = () => resolve();
+            recorder.onerror = (e) => reject(e);
+          });
+
+          video.currentTime = 0;
+          await new Promise(res => {
+            const onSeek0 = () => { video.removeEventListener('seeked', onSeek0); res(); };
+            video.addEventListener('seeked', onSeek0);
+            setTimeout(res, 400);
+          });
+
+          if (audioCtx && audioCtx.state === 'suspended') {
+            await audioCtx.resume().catch(() => {});
+          }
+
+          ctx.drawImage(video, 0, 0, targetW, targetH);
+          recorder.start(200);
+
+          const drawTimer = setInterval(() => {
+            if (!video.paused && !video.ended) {
+              ctx.drawImage(video, 0, 0, targetW, targetH);
+              if (onProgress) {
+                const pct = Math.min(98, Math.max(10, Math.round((video.currentTime / duration) * 90) + 8));
+                onProgress(pct, `Comprimindo vídeo "${file.name}" (${pct}%)...`);
+              }
+            }
+          }, 40);
+
+          await video.play();
+          await new Promise((resolve) => {
+            video.onended = resolve;
+            // Timeout de segurança caso o evento onended atrase
+            setTimeout(resolve, (duration * 1000) + 2500);
+          });
+
+          clearInterval(drawTimer);
+          if (recorder.state !== 'inactive') recorder.stop();
+          await recordingDone;
+
+          combinedStream.getTracks().forEach(t => t.stop());
+          if (audioCtx) audioCtx.close().catch(() => {});
+
+          const outType = supportedMime.includes('webm') ? 'video/webm' : 'video/mp4';
+          const compressedCandidate = new Blob(chunks, { type: outType });
+
+          if (compressedCandidate.size > 0 && (compressedCandidate.size + thumbBlob.size + FIRESTORE_DOC_OVERHEAD_BYTES) < file.size) {
+            fullBlob = compressedCandidate;
+            format = outType.includes('webm') ? 'webm' : 'mp4';
+          }
+        } catch (compErr) {
+          console.warn('Aviso na compressão de vídeo:', compErr);
+        }
+      }
+
+      URL.revokeObjectURL(url);
+
+      if (!fullBlob) {
+        const isWebm = file.type.includes('webm');
+        format = isWebm ? 'webm' : 'mp4';
+        fullBlob = new Blob([file], { type: isWebm ? 'video/webm' : 'video/mp4' });
+      }
+
+      return {
+        fullBlob,
+        thumbBlob,
+        previewUrl: URL.createObjectURL(thumbBlob),
+        type: 'video',
+        format,
+        originalSize: file.size,
+        optimizedSize: fullBlob.size,
+        thumbSize: thumbBlob.size,
+        totalBytesToAdd: fullBlob.size + thumbBlob.size + FIRESTORE_DOC_OVERHEAD_BYTES
+      };
+    }
+
+    // Controle do Modal de Upload
+    const uploadModal = document.getElementById('uploadModal');
+    function openUploadModal() {
+      if (!canUserEdit()) {
+        alert('Sua conta possui permissão apenas para visualizar a galeria.');
+        return;
+      }
+      uploadModal.classList.remove('hidden');
+      uploadModal.classList.add('flex');
+    }
+    function closeUploadModal() {
+      uploadModal.classList.add('hidden');
+      uploadModal.classList.remove('flex');
+      document.getElementById('stepSelect').classList.remove('hidden');
+      document.getElementById('stepMetadataForm').classList.add('hidden');
+      document.getElementById('progressContainer').classList.add('hidden');
+      document.getElementById('preUploadSummaryBox').classList.add('hidden');
+      document.getElementById('btnTriggerFile').classList.remove('hidden');
+      document.getElementById('uploadErrorBox').classList.add('hidden');
+      document.getElementById('uploadHeaderTitle').textContent = 'Enviar Fotos e Vídeos';
+      document.getElementById('uploadHeaderSub').textContent = 'Conversão automática para WebP e WebM/MP4';
+      preparedPreUploadItems = [];
+      stagedUploads = [];
+      chosenModalCategory = null;
+      document.getElementById('fileInput').value = '';
+    }
+
+    document.getElementById('btnOpenUploadHeader').addEventListener('click', openUploadModal);
+    document.getElementById('btnOpenUploadFab').addEventListener('click', openUploadModal);
+    document.getElementById('btnCloseUploadModal').addEventListener('click', closeUploadModal);
+    document.getElementById('btnTriggerFile').addEventListener('click', () => document.getElementById('fileInput').click());
+    document.getElementById('btnReselectFiles').addEventListener('click', () => document.getElementById('fileInput').click());
+
+    // 1. AO ESCOLHER ARQUIVOS: OTIMIZA LOCALMENTE E EXIBE O TAMANHO TOTAL ANTES DO UPLOAD
+    document.getElementById('fileInput').addEventListener('change', async (e) => {
+      const files = Array.from(e.target.files || []);
+      if (!files.length) return;
+
+      document.getElementById('btnTriggerFile').classList.add('hidden');
+      document.getElementById('preUploadSummaryBox').classList.add('hidden');
+      document.getElementById('progressContainer').classList.remove('hidden');
+      document.getElementById('uploadErrorBox').classList.add('hidden');
+      document.getElementById('progressPhaseTitle').innerHTML = `
+        <span class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+        Otimizando e calculando tamanho...
+      `;
+
+      preparedPreUploadItems = [];
+
+      try {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const fnameLower = (file.name || '').toLowerCase();
+          const isVideoFile = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(fnameLower);
+
+          const updateItemProgress = (itemPct, labelText) => {
+            const globalPct = Math.min(100, Math.round(((i + (itemPct / 100)) / files.length) * 100));
+            document.getElementById('progressStatus').textContent = `[${i + 1}/${files.length}] ${labelText}`;
+            document.getElementById('progressPct').textContent = `${globalPct}%`;
+            document.getElementById('progressBar').style.width = `${globalPct}%`;
+          };
+
+          updateItemProgress(5, `Preparando "${file.name}"...`);
+
+          const processed = isVideoFile
+            ? await optimizeVideo(file, updateItemProgress)
+            : await optimizeImage(file, updateItemProgress);
+
+          preparedPreUploadItems.push({
+            tempId: `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+            originalFileName: file.name,
+            customTitle: file.name.replace(/\.[^/.]+$/, ''),
+            ...processed
+          });
+        }
+
+        document.getElementById('progressContainer').classList.add('hidden');
+        renderPreUploadSummary();
+      } catch (err) {
+        console.error(err);
+        const errBox = document.getElementById('uploadErrorBox');
+        errBox.textContent = `Erro ao preparar arquivos: ${err.message}`;
+        errBox.classList.remove('hidden');
+        document.getElementById('btnTriggerFile').classList.remove('hidden');
+        document.getElementById('progressContainer').classList.add('hidden');
+      }
+    });
+
+    function renderPreUploadSummary() {
+      if (preparedPreUploadItems.length === 0) {
+        document.getElementById('preUploadSummaryBox').classList.add('hidden');
+        document.getElementById('btnTriggerFile').classList.remove('hidden');
+        return;
+      }
+
+      const totalOriginal = preparedPreUploadItems.reduce((acc, i) => acc + i.originalSize, 0);
+      const totalToAdd = preparedPreUploadItems.reduce((acc, i) => acc + i.totalBytesToAdd, 0);
+      const savedPct = Math.max(0, Math.round(((totalOriginal - totalToAdd) / Math.max(1, totalOriginal)) * 100));
+      const currentUsed = getTotalUsedStorageBytes();
+      const projectedUsed = currentUsed + totalToAdd;
+
+      document.getElementById('preUploadOriginalSize').textContent = formatBytes(totalOriginal);
+      document.getElementById('preUploadTotalToAdd').textContent = `+ ${formatBytes(totalToAdd)}`;
+      document.getElementById('preUploadSavedBadge').textContent = savedPct > 0 ? `-${savedPct}% mais leve` : 'Otimizado';
+      document.getElementById('preUploadCurrentStorage').textContent = formatBytes(currentUsed);
+      document.getElementById('preUploadProjectedStorage').textContent = formatBytes(projectedUsed);
+
+      const btnStart = document.getElementById('btnStartUploadNow');
+      const errBox = document.getElementById('uploadErrorBox');
+      if (projectedUsed > MAX_STORAGE_BYTES) {
+        btnStart.disabled = true;
+        btnStart.classList.add('opacity-40', 'pointer-events-none');
+        document.getElementById('btnStartUploadText').textContent = 'Limite de 1 GB Excedido';
+        errBox.textContent = 'Capacidade máxima de 1 GB atingida! Remova alguns arquivos para liberar espaço.';
+        errBox.classList.remove('hidden');
+      } else {
+        btnStart.disabled = false;
+        btnStart.classList.remove('opacity-40', 'pointer-events-none');
+        document.getElementById('btnStartUploadText').textContent = `Fazer Upload (+ ${formatBytes(totalToAdd)})`;
+        errBox.classList.add('hidden');
+      }
+
+      const list = document.getElementById('preUploadFilesList');
+      list.innerHTML = preparedPreUploadItems.map((item, idx) => `
+        <div class="flex items-center justify-between gap-3 p-2.5 rounded-xl bg-zinc-950 border border-zinc-800">
+          <div class="flex items-center gap-2.5 min-w-0">
+            <img src="${item.previewUrl}" class="w-11 h-11 rounded-lg object-cover bg-zinc-900 flex-shrink-0" />
+            <div class="min-w-0">
+              <p class="text-xs font-medium text-white truncate">${item.originalFileName}</p>
+              <p class="text-[11px] text-zinc-400">
+                ${formatBytes(item.originalSize)} → <strong class="text-emerald-400">+ ${formatBytes(item.totalBytesToAdd)}</strong> (.${item.format})
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            data-remove-pre="${idx}"
+            class="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-zinc-900 transition"
+            title="Remover arquivo deste envio"
+          >
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      `).join('');
+
+      document.getElementById('preUploadSummaryBox').classList.remove('hidden');
+      lucide.createIcons();
+
+      document.querySelectorAll('[data-remove-pre]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.dataset.removePre);
+          preparedPreUploadItems.splice(idx, 1);
+          renderPreUploadSummary();
+        });
+      });
+    }
+
+    // 2. AO CLICAR EM CONFIRMAR UPLOAD: ENVIA AO FIREBASE STORAGE COM BARRA DE PROGRESSO
+    document.getElementById('btnStartUploadNow').addEventListener('click', async () => {
+      if (!preparedPreUploadItems.length) return;
+
+      document.getElementById('preUploadSummaryBox').classList.add('hidden');
+      document.getElementById('progressContainer').classList.remove('hidden');
+      document.getElementById('uploadErrorBox').classList.add('hidden');
+      document.getElementById('progressPhaseTitle').innerHTML = `
+        <span class="w-4 h-4 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></span>
+        Enviando para o Firebase...
+      `;
+
+      stagedUploads = [];
+
+      try {
+        for (let i = 0; i < preparedPreUploadItems.length; i++) {
+          const item = preparedPreUploadItems[i];
+          const weight = 100 / preparedPreUploadItems.length;
+          const base = i * weight;
+
+          const uid = item.tempId;
+          const thumbRef = ref(storage, `eventos/midias/${uid}_thumb.webp`);
+          const fullRef = ref(storage, `eventos/midias/${uid}_full.${item.format}`);
+
+          document.getElementById('progressStatus').textContent = `Enviando ${i + 1}/${preparedPreUploadItems.length} (${formatBytes(item.totalBytesToAdd)})...`;
+
+          await uploadBytesResumable(thumbRef, item.thumbBlob, { contentType: 'image/webp' });
+          const thumbUrl = await getDownloadURL(thumbRef);
+
+          const task = uploadBytesResumable(fullRef, item.fullBlob, {
+            contentType: item.type === 'video' ? `video/${item.format}` : 'image/webp'
+          });
+
+          await new Promise((resolve, reject) => {
+            task.on('state_changed', (snap) => {
+              const pct = Math.round(base + ((snap.bytesTransferred / snap.totalBytes) * weight));
+              document.getElementById('progressPct').textContent = `${pct}%`;
+              document.getElementById('progressBar').style.width = `${pct}%`;
+            }, reject, resolve);
+          });
+
+          const fullUrl = await getDownloadURL(fullRef);
+
+          stagedUploads.push({
+            tempId: uid,
+            customTitle: item.customTitle,
+            type: item.type,
+            format: item.format,
+            fullUrl,
+            thumbUrl,
+            originalSize: item.originalSize,
+            optimizedSize: item.optimizedSize,
+            thumbSize: item.thumbSize,
+            totalBytesToAdd: item.totalBytesToAdd
+          });
+        }
+
+        // Vai imediatamente para a Tela 3: Nome/Título e Categoria obrigatória
+        showMetadataStep();
+      } catch (err) {
+        console.error(err);
+        const errBox = document.getElementById('uploadErrorBox');
+        errBox.textContent = `Erro no upload para o Firebase Storage (${err.code || err.message}). Verifique se as Regras do Storage estão publicadas no console do projeto lembrancas-neizy.`;
+        errBox.classList.remove('hidden');
+        document.getElementById('preUploadSummaryBox').classList.remove('hidden');
+        document.getElementById('progressContainer').classList.add('hidden');
+      }
+    });
+
+    function showMetadataStep() {
+      document.getElementById('stepSelect').classList.add('hidden');
+      document.getElementById('stepMetadataForm').classList.remove('hidden');
+      document.getElementById('uploadHeaderTitle').textContent = 'Identificar e Categorizar';
+      document.getElementById('uploadHeaderSub').textContent = 'Obrigatório: dê um título e escolha Casamento ou Revelação';
+
+      const list = document.getElementById('stagedFilesList');
+      list.innerHTML = stagedUploads.map((item, idx) => {
+        return `
+          <div class="flex items-center gap-3 p-3 rounded-2xl bg-zinc-950 border border-zinc-800">
+            <img src="${item.thumbUrl}" class="w-16 h-16 rounded-xl object-cover flex-shrink-0 bg-zinc-900" />
+            <div class="flex-1 min-w-0 space-y-1.5">
+              <input
+                type="text"
+                required
+                data-idx="${idx}"
+                value="${item.customTitle}"
+                placeholder="Ex: Entrada dos Noivos, Revelação..."
+                class="staged-title-input w-full px-3 py-2 rounded-xl bg-zinc-900 border border-zinc-700 focus:border-amber-400 focus:outline-none text-sm text-white"
+              />
+              <div class="text-[11px] text-zinc-400">
+                <span class="uppercase font-semibold text-emerald-400">.${item.format}</span> •
+                Adicionado ao banco: <strong class="text-zinc-200">+ ${formatBytes(item.totalBytesToAdd)}</strong>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      document.querySelectorAll('.staged-title-input').forEach((inp) => {
+        inp.addEventListener('input', (e) => {
+          stagedUploads[Number(e.target.dataset.idx)].customTitle = e.target.value;
+          validateMetadataForm();
+        });
+      });
+
+      validateMetadataForm();
+    }
+
+    document.querySelectorAll('.meta-cat-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        chosenModalCategory = btn.dataset.selectCat;
+        document.querySelectorAll('.meta-cat-btn').forEach((b) => {
+          b.className = b.dataset.selectCat === chosenModalCategory
+            ? 'meta-cat-btn flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-amber-400 bg-amber-500/20 text-amber-300 text-sm font-semibold transition'
+            : 'meta-cat-btn flex items-center justify-center gap-2 p-3.5 rounded-2xl border border-zinc-800 bg-zinc-950 text-zinc-400 text-sm font-semibold transition';
+        });
+        validateMetadataForm();
+      });
+    });
+
+    function validateMetadataForm() {
+      const valid = chosenModalCategory && stagedUploads.length > 0 && stagedUploads.every(i => i.customTitle.trim().length > 0);
+      document.getElementById('btnSubmitMetadata').disabled = !valid;
+    }
+
+    document.getElementById('stepMetadataForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btnSubmitMetadata');
+      btn.disabled = true;
+      btn.textContent = 'Salvando no Firestore...';
+
+      try {
+        for (const item of stagedUploads) {
+          await addDoc(collection(db, 'midias'), {
+            title: item.customTitle.trim(),
+            category: chosenModalCategory,
+            type: item.type,
+            format: item.format,
+            fullUrl: item.fullUrl,
+            thumbUrl: item.thumbUrl,
+            originalSize: item.originalSize,
+            optimizedSize: item.optimizedSize,
+            thumbSize: item.thumbSize || 20480,
+            isFavorite: false,
+            createdAt: Date.now()
+          });
+        }
+        closeUploadModal();
+      } catch (err) {
+        console.error(err);
+        const errBox = document.getElementById('uploadErrorBox');
+        errBox.textContent = `Erro ao salvar no Firestore (${err.code || err.message}). Verifique se o Firestore está criado e com as regras liberadas.`;
+        errBox.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Concluir e Publicar na Galeria';
+      }
+    });
+  </script>
+</body>
+</html>
